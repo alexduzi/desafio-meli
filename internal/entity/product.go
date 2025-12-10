@@ -1,4 +1,4 @@
-package product
+package entity
 
 import (
 	"github.com/rs/xid"

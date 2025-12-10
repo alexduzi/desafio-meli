@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"project/internal/infra/database"
 
 	"github.com/gin-gonic/gin"
 )
@@ -25,6 +26,11 @@ func setupRouter() *gin.Engine {
 }
 
 func main() {
+	_, err := database.InitDB()
+	if err != nil {
+		panic(err)
+	}
+
 	r := setupRouter()
 
 	r.Run()

@@ -4,6 +4,7 @@ go 1.23.3
 
 require (
 	github.com/gin-gonic/gin v1.9.0
+	github.com/mattn/go-sqlite3 v1.14.32
 	github.com/rs/xid v1.6.0
 	github.com/stretchr/testify v1.8.2
 )

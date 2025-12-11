@@ -1,37 +1,29 @@
 package main
 
 import (
-	"net/http"
+	"log"
+	"project/internal/handler"
 	"project/internal/infra/database"
-
-	"github.com/gin-gonic/gin"
+	httpInfra "project/internal/infra/http"
+	"project/internal/usecase"
 )
 
-func setupRouter() *gin.Engine {
-	r := gin.Default()
-
-	r.GET("/", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "Hello from GO!",
-		})
-	})
-
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "pong",
-		})
-	})
-
-	return r
-}
-
 func main() {
-	_, err := database.InitDB()
+	db, err := database.InitDB()
 	if err != nil {
+		log.Fatal("Failed to initialize database:", err)
 		panic(err)
 	}
 
-	r := setupRouter()
+	productRepo := database.NewProductRepository(db)
 
-	r.Run()
+	listProductUseCase := usecase.NewListProductUseCase(productRepo)
+
+	productHandler := handler.NewProductHandler(listProductUseCase)
+
+	router := httpInfra.SetupRouter(productHandler)
+
+	if err := router.Run(); err != nil {
+		log.Fatal("Failed to start server:", err)
+	}
 }

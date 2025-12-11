@@ -18,8 +18,9 @@ func setupTestRouter() *gin.Engine {
 	db := &sql.DB{}
 	productRepo := database.NewProductRepository(db)
 	listProductUseCase := usecase.NewListProductUseCase(productRepo)
+	getProductUseCase := usecase.NewGetProductUseCase(productRepo)
 
-	productHandler := handler.NewProductHandler(listProductUseCase)
+	productHandler := handler.NewProductHandler(listProductUseCase, getProductUseCase)
 
 	return httpInfra.SetupRouter(productHandler)
 }

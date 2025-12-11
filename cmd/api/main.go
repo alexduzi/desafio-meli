@@ -18,8 +18,9 @@ func main() {
 	productRepo := database.NewProductRepository(db)
 
 	listProductUseCase := usecase.NewListProductUseCase(productRepo)
+	getProductUseCase := usecase.NewGetProductUseCase(productRepo)
 
-	productHandler := handler.NewProductHandler(listProductUseCase)
+	productHandler := handler.NewProductHandler(listProductUseCase, getProductUseCase)
 
 	router := httpInfra.SetupRouter(productHandler)
 

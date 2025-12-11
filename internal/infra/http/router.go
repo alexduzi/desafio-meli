@@ -14,6 +14,7 @@ func SetupRouter(
 	api := r.Group("/api/v1")
 	{
 		api.GET("/products", productHandler.ListProducts)
+		api.GET("/products/:id", productHandler.GetProduct)
 	}
 
 	return r

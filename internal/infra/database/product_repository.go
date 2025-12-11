@@ -27,3 +27,9 @@ func (p *ProductRepository) ListProducts() ([]entity.Product, error) {
 
 	return products, nil
 }
+
+func (p *ProductRepository) GetProduct(id string) (*entity.Product, error) {
+	return &entity.Product{
+		ID: id,
+	}, nil
+}

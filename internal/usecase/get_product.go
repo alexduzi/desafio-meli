@@ -19,10 +19,38 @@ func NewGetProductUseCase(productRepo ProductRepositoryInterface) *GetProductUse
 func (p *GetProductUseCase) Execute(input ProductInputDTO) (*ProductDTO, error) {
 	product, err := p.ProductRepository.GetProduct(input.ID)
 	if err != nil {
-		return nil, fmt.Errorf("error when get product %w", err)
+		return nil, fmt.Errorf("error get product use case %w", err)
+	}
+
+	images, err := p.ProductRepository.FindImagesByProductID(input.ID)
+	if err != nil {
+		return nil, fmt.Errorf("error get product images use case %w", err)
+	}
+
+	imagesDto := make([]ProductImageDTO, 0, len(images))
+
+	for _, image := range images {
+		imagesDto = append(imagesDto, ProductImageDTO{
+			ID:           image.ID,
+			ProductID:    image.ProductID,
+			ImageURL:     image.ImageURL,
+			DisplayOrder: image.DisplayOrder,
+		})
 	}
 
 	return &ProductDTO{
-		ID: product.ID,
+		ID:          product.ID,
+		Title:       product.Title,
+		Description: product.Description,
+		Price:       product.Price,
+		Currency:    product.Currency,
+		Condition:   product.Condition,
+		Stock:       product.Stock,
+		SellerID:    product.SellerID,
+		SellerName:  product.SellerName,
+		Category:    product.Category,
+		CreatedAt:   product.CreatedAt,
+		UpdatedAt:   product.UpdatedAt,
+		Images:      imagesDto,
 	}, nil
 }

@@ -1,20 +1,24 @@
 package database
 
 import (
-	"database/sql"
 	"fmt"
-	"os"
+	"project/internal/infra/database/migrations"
 
+	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func InitDB() (*sql.DB, error) {
-	db, err := sql.Open("sqlite3", ":memory:")
+func InitDB() (*sqlx.DB, error) {
+	db, err := sqlx.Open("sqlite3", ":memory:")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
-	schema, err := os.ReadFile("migrations/001_schema.sql")
+	if err := db.Ping(); err != nil {
+		return nil, fmt.Errorf("failed to ping database: %w", err)
+	}
+
+	schema, err := migrations.FS.ReadFile("001_schema.sql")
 	if err != nil {
 		return nil, fmt.Errorf("failed to read schema: %w", err)
 	}
@@ -23,7 +27,7 @@ func InitDB() (*sql.DB, error) {
 		return nil, fmt.Errorf("failed to execute schema: %w", err)
 	}
 
-	seed, err := os.ReadFile("migrations/002_seed.sql")
+	seed, err := migrations.FS.ReadFile("002_seed.sql")
 	if err != nil {
 		return nil, fmt.Errorf("failed to read seed data: %w", err)
 	}

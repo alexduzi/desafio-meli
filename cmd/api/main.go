@@ -12,8 +12,8 @@ func main() {
 	db, err := database.InitDB()
 	if err != nil {
 		log.Fatal("Failed to initialize database:", err)
-		panic(err)
 	}
+	defer db.Close()
 
 	productRepo := database.NewProductRepository(db)
 
@@ -24,7 +24,8 @@ func main() {
 
 	router := httpInfra.SetupRouter(productHandler)
 
-	if err := router.Run(); err != nil {
+	log.Println("Server starting on :8080")
+	if err := router.Run(":8080"); err != nil {
 		log.Fatal("Failed to start server:", err)
 	}
 }

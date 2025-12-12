@@ -2,8 +2,8 @@ basePath: /api/v1
 host: localhost:8080
 info:
   contact:
-    email: support@example.com
-    name: API Support
+    email: duzihd@gmail.com
+    name: Alex Duzi
   description: API for managing products
   license:
     name: Apache 2.0

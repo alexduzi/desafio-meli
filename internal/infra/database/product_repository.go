@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"project/internal/entity"
+	"project/internal/errors"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -25,7 +26,7 @@ func (p *ProductRepository) ListProducts() ([]entity.Product, error) {
 
 	err := p.DB.Select(&products, query)
 	if err != nil {
-		return nil, fmt.Errorf("error listing products: %w", err)
+		return nil, fmt.Errorf("%w: %v", errors.ErrDatabaseError, err)
 	}
 
 	return products, nil
@@ -38,10 +39,10 @@ func (p *ProductRepository) GetProduct(id string) (*entity.Product, error) {
 
 	err := p.DB.Get(&product, query, id)
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("product not found with id: %s", id)
+		return nil, errors.ErrProductNotFound
 	}
 	if err != nil {
-		return nil, fmt.Errorf("error getting product: %w", err)
+		return nil, fmt.Errorf("%w: %v", errors.ErrDatabaseError, err)
 	}
 
 	return &product, nil
@@ -53,8 +54,8 @@ func (p *ProductRepository) FindImagesByProductID(productID string) ([]entity.Pr
 	query := "SELECT * FROM product_images WHERE product_id = ? ORDER BY display_order ASC"
 
 	err := p.DB.Select(&images, query, productID)
-	if err != nil {
-		return nil, fmt.Errorf("error finding images: %w", err)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, fmt.Errorf("%w: %v", errors.ErrDatabaseError, err)
 	}
 
 	return images, nil

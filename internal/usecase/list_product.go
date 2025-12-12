@@ -41,7 +41,7 @@ func NewListProductUseCase(productRepo ProductRepositoryInterface) *ListProductU
 func (p *ListProductUseCase) Execute() ([]ProductDTO, error) {
 	products, err := p.ProductRepository.ListProducts()
 	if err != nil {
-		return nil, fmt.Errorf("error listing products use case %w", err)
+		return nil, fmt.Errorf("failed to list products: %w", err)
 	}
 
 	result := make([]ProductDTO, 0, len(products))

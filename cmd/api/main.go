@@ -15,8 +15,8 @@ import (
 // @description API for managing products
 // @termsOfService http://swagger.io/terms/
 
-// @contact.name API Support
-// @contact.email support@example.com
+// @contact.name Alex Duzi
+// @contact.email duzihd@gmail.com
 
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html

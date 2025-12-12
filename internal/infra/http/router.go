@@ -13,6 +13,9 @@ func SetupRouter(
 ) *gin.Engine {
 	r := gin.Default()
 
+	// Add centralized error handling middleware
+	r.Use(ErrorHandlerMiddleware())
+
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	api := r.Group("/api/v1")

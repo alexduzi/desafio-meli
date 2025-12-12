@@ -29,16 +29,14 @@ func NewProductHandler(listProductUseCase *usecase.ListProductUseCase, getProduc
 // @Failure 500 {object} map[string]string "error: error message"
 // @Router /products [get]
 func (h *ProductHandler) ListProducts(c *gin.Context) {
-	products, err := h.listProductUseCase.Execute()
+	result, err := h.listProductUseCase.Execute()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
+		_ = c.Error(err)
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"data": products,
+		"data": result,
 	})
 }
 
@@ -51,22 +49,15 @@ func (h *ProductHandler) ListProducts(c *gin.Context) {
 // @Param id path string true "Product ID"
 // @Success 200 {object} map[string]interface{} "data: product object"
 // @Failure 400 {object} map[string]string "error: validation error"
+// @Failure 404 {object} map[string]string "error: product not found"
 // @Failure 500 {object} map[string]string "error: error message"
 // @Router /products/{id} [get]
 func (h *ProductHandler) GetProduct(c *gin.Context) {
 	id := c.Param("id")
-	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "id must not be empty",
-		})
-		return
-	}
 
 	result, err := h.getProductUseCase.Execute(usecase.ProductInputDTO{ID: id})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
+		_ = c.Error(err)
 		return
 	}
 

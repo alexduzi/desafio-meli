@@ -1,9 +1,9 @@
 package entity
 
 import (
+	"fmt"
+	"math/rand"
 	"time"
-
-	"github.com/rs/xid"
 )
 
 const (
@@ -28,10 +28,10 @@ type Product struct {
 }
 
 func NewProduct(title, description string, price float64, currency, condition string, stock int, sellerID, sellerName, category string) (*Product, error) {
-	newId := xid.New().String()
+	newId := generateProductID()
 	now := time.Now()
 
-	return &Product{
+	product := &Product{
 		ID:          newId,
 		Title:       title,
 		Description: description,
@@ -44,7 +44,47 @@ func NewProduct(title, description string, price float64, currency, condition st
 		Category:    category,
 		CreatedAt:   now,
 		UpdatedAt:   now,
-	}, nil
+	}
+
+	if err := product.Validate(); err != nil {
+		return nil, err
+	}
+
+	return product, nil
+}
+
+func (p *Product) Validate() error {
+	if p.Title == "" {
+		return fmt.Errorf("title is required")
+	}
+
+	if p.Price < 0 {
+		return fmt.Errorf("price must be greater than or equal to 0")
+	}
+
+	if p.Currency == "" {
+		return fmt.Errorf("currency is required")
+	}
+
+	if p.Condition != New && p.Condition != Used && p.Condition != Refurbished {
+		return fmt.Errorf("condition must be 'new', 'used', or 'refurbished'")
+	}
+
+	if p.Stock < 0 {
+		return fmt.Errorf("stock must be greater than or equal to 0")
+	}
+
+	if p.SellerID == "" {
+		return fmt.Errorf("seller_id is required")
+	}
+
+	return nil
+}
+
+func generateProductID() string {
+	timestamp := time.Now().UnixNano()
+	random := rand.Int63n(999999)
+	return fmt.Sprintf("PROD-%d-%06d", timestamp, random)
 }
 
 type ProductImage struct {
@@ -52,4 +92,34 @@ type ProductImage struct {
 	ProductID    string `json:"product_id" db:"product_id"`
 	ImageURL     string `json:"image_url" db:"image_url"`
 	DisplayOrder int    `json:"display_order" db:"display_order"`
+}
+
+func NewProductImage(productID, imageURL string, displayOrder int) (*ProductImage, error) {
+	image := &ProductImage{
+		ProductID:    productID,
+		ImageURL:     imageURL,
+		DisplayOrder: displayOrder,
+	}
+
+	if err := image.Validate(); err != nil {
+		return nil, err
+	}
+
+	return image, nil
+}
+
+func (p *ProductImage) Validate() error {
+	if p.ProductID == "" {
+		return fmt.Errorf("product_id is required")
+	}
+
+	if p.ImageURL == "" {
+		return fmt.Errorf("image_url is required")
+	}
+
+	if p.DisplayOrder < 0 {
+		return fmt.Errorf("display_order must be greater than or equal to 0")
+	}
+
+	return nil
 }

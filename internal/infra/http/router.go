@@ -10,12 +10,14 @@ import (
 
 func SetupRouter(
 	productHandler *handler.ProductHandler,
+	healthHandler *handler.HealthHandler,
 ) *gin.Engine {
 	r := gin.Default()
 
 	// Add centralized error handling middleware
 	r.Use(ErrorHandlerMiddleware())
 
+	r.GET("/health", healthHandler.HealthCheck)
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	api := r.Group("/api/v1")

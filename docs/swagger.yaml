@@ -1,4 +1,14 @@
 basePath: /api/v1
+definitions:
+  handler.HealthResponse:
+    properties:
+      service:
+        type: string
+      status:
+        type: string
+      timestamp:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -12,6 +22,19 @@ info:
   title: Product API
   version: "1.0"
 paths:
+  /health:
+    get:
+      description: Returns the health status of the API
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.HealthResponse'
+      summary: Health check endpoint
+      tags:
+      - health
   /products:
     get:
       consumes:
@@ -55,6 +78,12 @@ paths:
             type: object
         "400":
           description: 'error: validation error'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: 'error: product not found'
           schema:
             additionalProperties:
               type: string

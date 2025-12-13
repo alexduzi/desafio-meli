@@ -25,8 +25,9 @@ func setupTestRouter(t *testing.T) *gin.Engine {
 	getProductUseCase := usecase.NewGetProductUseCase(productRepo)
 
 	productHandler := handler.NewProductHandler(listProductUseCase, getProductUseCase)
+	healthHandler := handler.NewHealthHandler()
 
-	return httpInfra.SetupRouter(productHandler)
+	return httpInfra.SetupRouter(productHandler, healthHandler)
 }
 
 func TestIntegration_ListProducts(t *testing.T) {
@@ -71,4 +72,20 @@ func TestIntegration_GetProduct_EmptyID(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestIntegration_HealthCheck(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test")
+	}
+
+	router := setupTestRouter(t)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/health", nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "healthy")
+	assert.Contains(t, w.Body.String(), "product-api")
 }

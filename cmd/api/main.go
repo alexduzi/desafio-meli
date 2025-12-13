@@ -37,8 +37,9 @@ func main() {
 	getProductUseCase := usecase.NewGetProductUseCase(productRepo)
 
 	productHandler := handler.NewProductHandler(listProductUseCase, getProductUseCase)
+	healthHandler := handler.NewHealthHandler()
 
-	router := httpInfra.SetupRouter(productHandler)
+	router := httpInfra.SetupRouter(productHandler, healthHandler)
 
 	log.Println("Server starting on :8080")
 	if err := router.Run(":8080"); err != nil {

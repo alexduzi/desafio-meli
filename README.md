@@ -27,6 +27,8 @@ Esta API foi desenvolvida como parte de um desafio técnico e implementa um sist
 - ✅ **Error Handling Centralizado** - Middleware customizado para tratamento de erros
 - ✅ **Documentação Swagger** - API totalmente documentada
 - ✅ **Otimização de Performance** - Prevenção do problema N+1 com thumbnails
+- ✅ **Docker Support** - Multi-stage build otimizado com health checks
+- ✅ **Production Ready** - Container seguro com usuário non-root
 
 ---
 
@@ -183,13 +185,60 @@ go test -cover ./internal/...
 go build -o bin/api cmd/api/main.go
 ```
 
+### Usando Docker (Recomendado para Produção)
+
+#### Usando Make + Docker (Mais Fácil)
+
+```bash
+# Docker Compose
+make docker-compose-up      # Iniciar aplicação
+make docker-compose-logs    # Ver logs
+make docker-compose-down    # Parar aplicação
+
+# Docker direto
+make docker-build           # Construir imagem
+make docker-run             # Executar container
+make docker-logs            # Ver logs
+make docker-stop            # Parar e remover container
+make docker-clean           # Limpar todos recursos Docker
+```
+
+#### Usando Docker Compose Manualmente
+
+```bash
+# Iniciar a aplicação
+docker-compose up -d
+
+# Ver logs
+docker-compose logs -f
+
+# Parar a aplicação
+docker-compose down
+```
+
+#### Usando Docker Diretamente
+
+```bash
+# Construir a imagem
+docker build -t product-api .
+
+# Executar o container
+docker run -d -p 8080:8080 --name product-api product-api
+
+# Ver logs
+docker logs -f product-api
+
+# Parar e remover o container
+docker stop product-api && docker rm product-api
+```
+
 ### Acessando a API
 
 Após iniciar a aplicação:
 
 - **API Base URL**: `http://localhost:8080`
 - **Swagger UI**: `http://localhost:8080/swagger/index.html`
-- **Health Check**: `http://localhost:8080/api/v1/products`
+- **Health Check**: `http://localhost:8080/health`
 
 ---
 
@@ -227,7 +276,8 @@ internal/
 │   ├── get_product_test.go      # Testes do caso de uso GetProduct
 │   └── list_product_test.go     # Testes do caso de uso ListProducts
 ├── handler/
-│   └── product_handler_test.go  # Testes dos handlers HTTP
+│   ├── product_handler_test.go  # Testes dos handlers HTTP
+│   └── health_handler_test.go   # Testes do health check
 └── infra/http/
     ├── error_middleware_test.go # Testes do middleware de erros
     └── router_test.go           # Testes de rotas
@@ -249,6 +299,23 @@ test/integration/
 ---
 
 ## Endpoints da API
+
+### Health Check
+
+```http
+GET /health
+```
+
+**Resposta de Sucesso (200 OK):**
+```json
+{
+  "status": "healthy",
+  "timestamp": "2024-01-01T00:00:00Z",
+  "service": "product-api"
+}
+```
+
+**Uso**: Endpoint para verificar se a API está funcionando corretamente. Útil para monitoramento, health checks do Docker/Kubernetes, e load balancers.
 
 ### Listar Produtos
 
@@ -371,7 +438,7 @@ func ErrorHandlerMiddleware() gin.HandlerFunc {
 - Handlers mais limpos
 - Fácil adicionar logging/monitoring
 
-### 4. Otimização N+1 com Thumbnails
+### Otimização N+1 com Thumbnails
 
 **Problema**: Ao listar produtos, buscar todas as imagens de cada produto seria ineficiente:
 ```
@@ -383,6 +450,34 @@ func ErrorHandlerMiddleware() gin.HandlerFunc {
 - **Get Endpoint**: Retorna array completo de `images` (2 queries)
 
 **Resultado**: Performance ~10x melhor em listagens.
+
+### Docker Multi-Stage Build
+
+**Por quê?**
+
+- **Imagem otimizada**: Build stage com ~500MB, runtime final com ~20MB
+- **Segurança**: Container roda com usuário non-root (appuser)
+- **Health checks**: Monitoramento automático usando endpoint `/health`
+- **CGO habilitado**: Suporte completo ao SQLite com driver nativo
+
+**Características**:
+
+```dockerfile
+# Build stage - Go 1.24 + ferramentas de build
+FROM golang:1.24-alpine AS builder
+# ... compila aplicação ...
+
+# Runtime stage - Alpine mínimo
+FROM alpine:latest
+# ... apenas o binário + libs runtime ...
+USER appuser  # Roda como non-root
+```
+
+**Benefícios**:
+
+- Deployment rápido e seguro
+- Menor superfície de ataque
+- Compatível com Kubernetes, Docker Swarm, etc.
 
 ## Estrutura do Projeto
 
@@ -447,15 +542,27 @@ func ErrorHandlerMiddleware() gin.HandlerFunc {
 
 | Comando | Descrição |
 |---------|-----------|
+| **Desenvolvimento Local** | |
 | `make help` | Mostra todos os comandos disponíveis |
 | `make run` | Executa a aplicação localmente |
 | `make build` | Compila o binário da aplicação |
 | `make swagger` | Gera/atualiza documentação Swagger |
+| **Testes** | |
 | `make test` | Executa todos os testes (unitários + integração) |
 | `make test-unit` | Executa apenas testes unitários (rápido, sem DB) |
 | `make test-integration` | Executa apenas testes de integração (requer DB) |
 | `make test-coverage` | Executa testes e mostra cobertura |
 | `make test-coverage-html` | Gera relatório HTML de cobertura |
+| **Docker** | |
+| `make docker-build` | Constrói a imagem Docker |
+| `make docker-run` | Executa o container Docker |
+| `make docker-stop` | Para e remove o container Docker |
+| `make docker-logs` | Visualiza logs do container |
+| `make docker-compose-up` | Inicia aplicação com Docker Compose |
+| `make docker-compose-down` | Para aplicação com Docker Compose |
+| `make docker-compose-logs` | Visualiza logs do Docker Compose |
+| `make docker-clean` | Remove imagens e containers Docker |
+| **Utilitários** | |
 | `make clean` | Remove arquivos gerados (binários, coverage) |
 | `make deps` | Baixa e organiza dependências |
 | `make all` | Executa deps, swagger, build e test |

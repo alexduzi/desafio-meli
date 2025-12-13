@@ -1,13 +1,19 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"net/http"
+	"os"
+	"os/signal"
 	"project/internal/config"
 	"project/internal/handler"
 	"project/internal/infra/database"
 	httpInfra "project/internal/infra/http"
 	"project/internal/usecase"
+	"syscall"
+	"time"
 
 	_ "project/docs"
 
@@ -50,8 +56,30 @@ func main() {
 	router := httpInfra.SetupRouter(productHandler, healthHandler)
 
 	serverAddr := fmt.Sprintf(":%s", cfg.AppPort)
-	log.Printf("Starting server on %s (mode: %s, env: %s)", serverAddr, cfg.GinMode, cfg.AppEnv)
-	if err := router.Run(serverAddr); err != nil {
-		log.Fatal("Failed to start server:", err)
+
+	srv := &http.Server{
+		Addr:    serverAddr,
+		Handler: router.Handler(),
 	}
+
+	go func() {
+		log.Printf("starting server on %s (mode: %s, env: %s)\n", serverAddr, cfg.GinMode, cfg.AppEnv)
+		if err := srv.ListenAndServe(); err != nil {
+			log.Fatalf("listen: %s\n", err)
+		}
+	}()
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
+	<-stop
+	log.Println("shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	fmt.Println("shutting down server...")
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatalf("server forced to shutdown: %v\n", err)
+	}
+	fmt.Println("server exiting")
 }

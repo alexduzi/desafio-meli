@@ -23,6 +23,7 @@ type Product struct {
 	SellerID    string    `json:"seller_id" db:"seller_id"`
 	SellerName  string    `json:"seller_name" db:"seller_name"`
 	Category    string    `json:"category" db:"category"`
+	Thumbnail   string    `json:"thumbnail" db:"thumbnail"`
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
 }

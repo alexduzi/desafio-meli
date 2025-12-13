@@ -27,6 +27,7 @@ func TestListProductUseCase_Execute_Success(t *testing.T) {
 					SellerID:    "seller-1",
 					SellerName:  "Store 1",
 					Category:    "Electronics",
+					Thumbnail:   "https://example.com/thumbnails/prod1.jpg",
 					CreatedAt:   now,
 					UpdatedAt:   now,
 				},
@@ -41,6 +42,7 @@ func TestListProductUseCase_Execute_Success(t *testing.T) {
 					SellerID:    "seller-2",
 					SellerName:  "Store 2",
 					Category:    "Books",
+					Thumbnail:   "https://example.com/thumbnails/prod2.jpg",
 					CreatedAt:   now,
 					UpdatedAt:   now,
 				},
@@ -57,7 +59,9 @@ func TestListProductUseCase_Execute_Success(t *testing.T) {
 	assert.Equal(t, "PROD-1", result[0].ID)
 	assert.Equal(t, "Product 1", result[0].Title)
 	assert.Equal(t, 100.0, result[0].Price)
+	assert.Equal(t, "https://example.com/thumbnails/prod1.jpg", result[0].Thumbnail)
 	assert.Equal(t, "PROD-2", result[1].ID)
+	assert.Equal(t, "https://example.com/thumbnails/prod2.jpg", result[1].Thumbnail)
 }
 
 func TestListProductUseCase_Execute_EmptyList(t *testing.T) {
@@ -106,6 +110,7 @@ func TestListProductUseCase_Execute_MapsAllFields(t *testing.T) {
 					SellerID:    "seller-test",
 					SellerName:  "Test Seller",
 					Category:    "Test Category",
+					Thumbnail:   "https://cdn.example.com/thumb-test.jpg",
 					CreatedAt:   now,
 					UpdatedAt:   now,
 				},
@@ -130,6 +135,37 @@ func TestListProductUseCase_Execute_MapsAllFields(t *testing.T) {
 	assert.Equal(t, "seller-test", product.SellerID)
 	assert.Equal(t, "Test Seller", product.SellerName)
 	assert.Equal(t, "Test Category", product.Category)
+	assert.Equal(t, "https://cdn.example.com/thumb-test.jpg", product.Thumbnail)
 	assert.Equal(t, now, product.CreatedAt)
 	assert.Equal(t, now, product.UpdatedAt)
+}
+
+func TestListProductUseCase_Execute_DoesNotIncludeImages(t *testing.T) {
+	now := time.Now()
+	mockRepo := &MockProductRepository{
+		ListProductsFunc: func() ([]entity.Product, error) {
+			return []entity.Product{
+				{
+					ID:        "PROD-1",
+					Title:     "Product with Thumbnail",
+					Price:     50.0,
+					Currency:  "USD",
+					Condition: "new",
+					Stock:     5,
+					SellerID:  "seller-1",
+					Thumbnail: "https://example.com/thumb.jpg",
+					CreatedAt: now,
+					UpdatedAt: now,
+				},
+			}, nil
+		},
+	}
+
+	useCase := NewListProductUseCase(mockRepo)
+	result, err := useCase.Execute()
+
+	assert.NoError(t, err)
+	assert.Len(t, result, 1)
+	assert.Equal(t, "https://example.com/thumb.jpg", result[0].Thumbnail)
+	assert.Nil(t, result[0].Images)
 }

@@ -24,6 +24,7 @@ type ProductDTO struct {
 	SellerName  string            `json:"seller_name"`
 	Category    string            `json:"category"`
 	Images      []ProductImageDTO `json:"images,omitempty"`
+	Thumbnail   string            `json:"thumbnail,omitempty"`
 	CreatedAt   time.Time         `json:"created_at"`
 	UpdatedAt   time.Time         `json:"updated_at"`
 }
@@ -58,6 +59,7 @@ func (p *ListProductUseCase) Execute() ([]ProductDTO, error) {
 			SellerID:    product.SellerID,
 			SellerName:  product.SellerName,
 			Category:    product.Category,
+			Thumbnail:   product.Thumbnail,
 			CreatedAt:   product.CreatedAt,
 			UpdatedAt:   product.UpdatedAt,
 		})

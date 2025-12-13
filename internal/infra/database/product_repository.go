@@ -22,7 +22,15 @@ func NewProductRepository(db *sqlx.DB) *ProductRepository {
 func (p *ProductRepository) ListProducts() ([]entity.Product, error) {
 	products := []entity.Product{}
 
-	query := "SELECT * FROM products ORDER BY created_at DESC"
+	query := `
+        SELECT 
+            p.*,
+            (SELECT image_url FROM product_images 
+             WHERE product_id = p.id 
+             ORDER BY display_order ASC 
+             LIMIT 1) as thumbnail
+        FROM products p
+    `
 
 	err := p.DB.Select(&products, query)
 	if err != nil {

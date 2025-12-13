@@ -1,2 +1,6 @@
 result.xml
 ./bin
+
+# Test coverage files
+coverage.out
+coverage.html

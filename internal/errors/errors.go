@@ -6,7 +6,6 @@ import (
 	"time"
 )
 
-// Domain errors
 var (
 	ErrProductNotFound     = errors.New("product not found")
 	ErrInvalidProductID    = errors.New("invalid product id")
@@ -15,7 +14,6 @@ var (
 	ErrInternalServerError = errors.New("internal server error")
 )
 
-// AppError represents an application error with HTTP status code
 type AppError struct {
 	Err        error
 	Message    string
@@ -34,7 +32,6 @@ func (e *AppError) Unwrap() error {
 	return e.Err
 }
 
-// NewAppError creates a new AppError
 func NewAppError(err error, message string, statusCode int, code string) *AppError {
 	return &AppError{
 		Err:        err,
@@ -44,7 +41,6 @@ func NewAppError(err error, message string, statusCode int, code string) *AppErr
 	}
 }
 
-// ErrorResponse represents the JSON error response structure
 type ErrorResponse struct {
 	Error     string    `json:"error"`
 	Message   string    `json:"message,omitempty"`
@@ -52,7 +48,6 @@ type ErrorResponse struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
-// GetStatusCode returns the appropriate HTTP status code for an error
 func GetStatusCode(err error) int {
 	var appErr *AppError
 	if errors.As(err, &appErr) {
@@ -71,7 +66,6 @@ func GetStatusCode(err error) int {
 	}
 }
 
-// GetErrorCode returns a string code for the error type
 func GetErrorCode(err error) string {
 	var appErr *AppError
 	if errors.As(err, &appErr) && appErr.Code != "" {

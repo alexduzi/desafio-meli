@@ -7,12 +7,20 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type ProductHandler struct {
-	listProductUseCase *usecase.ListProductUseCase
-	getProductUseCase  *usecase.GetProductUseCase
+type ListProductUseCase interface {
+	Execute() ([]usecase.ProductDTO, error)
 }
 
-func NewProductHandler(listProductUseCase *usecase.ListProductUseCase, getProductUseCase *usecase.GetProductUseCase) *ProductHandler {
+type GetProductUseCase interface {
+	Execute(input usecase.ProductInputDTO) (*usecase.ProductDTO, error)
+}
+
+type ProductHandler struct {
+	listProductUseCase ListProductUseCase
+	getProductUseCase  GetProductUseCase
+}
+
+func NewProductHandler(listProductUseCase ListProductUseCase, getProductUseCase GetProductUseCase) *ProductHandler {
 	return &ProductHandler{
 		listProductUseCase: listProductUseCase,
 		getProductUseCase:  getProductUseCase,

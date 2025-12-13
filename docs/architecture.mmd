@@ -1,0 +1,34 @@
+graph TB
+    Client[Cliente/Navegador]
+    
+    subgraph HTTP["Camada HTTP"]
+        Router[Gin Router]
+        ErrorMW[Middleware de Erros]
+        ProductHandler[Product Handler]
+        HealthHandler[Health Handler]
+    end
+    
+    subgraph Business["Camada de Negócio"]
+        ListUC[UseCase: Listar Produtos]
+        GetUC[UseCase: Buscar Produto]
+    end
+    
+    subgraph Data["Camada de Dados"]
+        RepoInterface[Interface Repository]
+        ProductRepo[Product Repository]
+        SQLite[(SQLite In-Memory)]
+    end
+    
+    Client -->|Requisição HTTP| Router
+    Router --> ErrorMW
+    ErrorMW --> ProductHandler
+    ErrorMW --> HealthHandler
+    
+    ProductHandler -->|Listar| ListUC
+    ProductHandler -->|Buscar por ID| GetUC
+    
+    ListUC --> RepoInterface
+    GetUC --> RepoInterface
+    RepoInterface -.->|implementa| ProductRepo
+    
+    ProductRepo -->|Query SQL| SQLite

@@ -3,6 +3,7 @@
 ![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)
 ![Test Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)
 ![Docker](https://img.shields.io/badge/Docker-Supported-2496ED?style=flat&logo=docker)
+![Inspired by](https://img.shields.io/badge/Inspired%20by-MercadoLibre-yellow)
 
 API RESTful para listagem de produto desenvolvida em Go com Clean Architecture.
 
@@ -12,12 +13,12 @@ API RESTful para listagem de produto desenvolvida em Go com Clean Architecture.
 
 - [Sobre o Projeto](#sobre-o-projeto)
 - [Arquitetura](#arquitetura)
-- [Tecnologias Utilizadas](#tecnologias-utilizadas)
+- [Endpoints da API](#endpoints-da-api)
 - [Pré-requisitos](#pré-requisitos)
 - [Instalação](#instalação)
 - [Como Usar](#como-usar)
+- [Tecnologias Utilizadas](#tecnologias-utilizadas)
 - [Testes](#testes)
-- [Endpoints da API](#endpoints-da-api)
 - [Decisões Técnicas](#decisões-técnicas)
 - [Estrutura do Projeto](#estrutura-do-projeto)
 
@@ -25,7 +26,7 @@ API RESTful para listagem de produto desenvolvida em Go com Clean Architecture.
 
 ## Sobre o Projeto
 
-Esta API foi desenvolvida como parte de um desafio técnico e implementa um sistema completo de gerenciamento de produtos com as seguintes características:
+Esta API foi desenvolvida como parte de um desafio técnico e implementa um sistema de listagem de produto com as seguintes características:
 
 - ✅ **Clean Architecture** - Separação clara de responsabilidades
 - ✅ **In-Memory Database** - SQLite em memória (`:memory:`)
@@ -40,9 +41,16 @@ Esta API foi desenvolvida como parte de um desafio técnico e implementa um sist
 
 ## Arquitetura
 
+
 O projeto segue os princípios de **Clean Architecture** (Arquitetura Limpa), separando o código em camadas bem definidas.
 
-Para visualizar os diagramas completos da arquitetura, consulte: [Architecture Diagrams](docs/architecture.md)
+Para visualizar os diagramas completos da arquitetura, consulte: [Diagrama arquitetural html](docs/architecture.html) (abra em algum navegador)
+
+Caso tenha problemas para visualizar o arquivo [Diagrama arquitetural mermaid](docs/architecture.mmd) copie e cole em algum visualizador online
+
+[Mermaid chart](https://www.mermaidchart.com)
+
+[Mermaid live](https://mermaid.live)
 
 ### Camadas:
 
@@ -53,10 +61,10 @@ Para visualizar os diagramas completos da arquitetura, consulte: [Architecture D
 
 ### Vantagens desta Arquitetura:
 
-- ✅ **Testabilidade**: Cada camada pode ser testada independentemente
-- ✅ **Manutenibilidade**: Mudanças em uma camada não afetam outras
-- ✅ **Flexibilidade**: Fácil trocar implementações (ex: SQLite → PostgreSQL)
-- ✅ **Escalabilidade**: Estrutura preparada para crescimento
+- **Testabilidade**: Cada camada pode ser testada independentemente
+- **Manutenibilidade**: Mudanças em uma camada não afetam outras
+- **Flexibilidade**: Fácil trocar implementações (ex: SQLite → PostgreSQL)
+- **Escalabilidade**: Estrutura preparada para crescimento
 
 ---
 
@@ -121,8 +129,6 @@ make swagger
 ---
 
 ## Como Usar
-
-### 🚀 Quick Start
 
 ```bash
 # Setup inicial (primeira vez)
@@ -242,7 +248,7 @@ Após iniciar a aplicação:
 - **Swagger UI**: `http://localhost:8080/swagger/index.html`
 - **Health Check**: `http://localhost:8080/health`
 
-### 📝 Exemplos de Uso com curl
+### Exemplos de Uso com curl
 
 ```bash
 # Health check
@@ -251,7 +257,7 @@ curl http://localhost:8080/health
 # Listar todos os produtos
 curl http://localhost:8080/api/v1/products
 
-# Obter produto específico
+# Obter produto específico (endpoint principal)
 curl http://localhost:8080/api/v1/products/MLB001
 
 # Com formatação JSON (requer jq)
@@ -357,7 +363,7 @@ GET /api/v1/products
 
 ---
 
-### Obter Produto por ID
+### Obter Produto por ID (endpoint principal para exibir os detalhes do produto)
 
 ```http
 GET /api/v1/products/{id}
@@ -508,83 +514,111 @@ func (h *Handler) GetProduct(c *gin.Context) {
 }
 ```
 
----
-
-### 5. Docker Multi-Stage Build
-
-**Decisão**: Usar multi-stage build com práticas de segurança.
-
-**Características**:
-- Build stage: ~500MB (compilador Go + ferramentas)
-- Runtime stage: ~20MB (Alpine + binário apenas)
-- Execução com usuário non-root
-- Integração com health check endpoint
-
-**Benefícios de Segurança**:
-- Superfície de ataque mínima
-- Sem ferramentas desnecessárias na imagem de produção
-- Segue best practices do Docker
-
----
-
 ## Estrutura do Projeto
 
 ```
 .
 ├── cmd/
 │   └── api/
-│       └── main.go              # Entry point da aplicação
+│       └── main.go                      # Entry point da aplicação
+│
 ├── internal/
-│   ├── entity/                  # Entidades de domínio
-│   │   ├── product.go
-│   │   └── product_test.go
-│   ├── errors/                  # Definição de erros customizados
-│   │   ├── errors.go
-│   │   └── errors_test.go
-│   ├── handler/                 # HTTP handlers (controllers)
-│   │   ├── product_handler.go
-│   │   ├── product_handler_test.go
-│   │   ├── health_handler.go
-│   │   └── health_handler_test.go
-│   ├── usecase/                 # Casos de uso (business logic)
-│   │   ├── product_repository.go
-│   │   ├── get_product.go
-│   │   ├── get_product_test.go
-│   │   ├── list_product.go
-│   │   ├── list_product_test.go
-│   │   └── mock_repository_test.go
-│   └── infra/
-│       ├── database/            # Implementação do banco de dados
-│       │   ├── db.go
-│       │   ├── product_repository.go
-│       │   └── migrations/
-│       │       ├── 001_schema.sql
-│       │       ├── 002_seed.sql
-│       │       └── migrations.go
-│       └── http/                # Configuração HTTP
-│           ├── router.go
-│           ├── router_test.go
-│           ├── error_middleware.go
-│           └── error_middleware_test.go
+│   ├── config/                          # Configurações da aplicação
+│   │   └── config.go                    # Carregamento de variáveis de ambiente
+│   │
+│   ├── dto/                             # Data Transfer Objects (centralizados)
+│   │   └── product_dto.go               # DTOs de produto, imagem e respostas HTTP
+│   │
+│   ├── entity/                          # Entidades de domínio
+│   │   ├── product.go                   # Product e ProductImage entities
+│   │   └── product_test.go              # Testes de entidades
+│   │
+│   ├── repository/                      # Interfaces/Ports (contratos)
+│   │   └── product_repository.go        # Interface ProductRepository + Mock
+│   │
+│   ├── usecase/                         # Casos de uso (lógica de negócio)
+│   │   ├── list_product.go              # Use case: listar produtos
+│   │   ├── list_product_test.go         # Testes unitários
+│   │   ├── get_product.go               # Use case: buscar produto por ID
+│   │   └── get_product_test.go          # Testes unitários
+│   │
+│   ├── handler/                         # HTTP handlers (camada de apresentação)
+│   │   ├── product_handler.go           # Handlers de produtos
+│   │   ├── product_handler_test.go      # Testes de handlers
+│   │   ├── health_handler.go            # Handler de health check
+│   │   └── health_handler_test.go       # Testes de health check
+│   │
+│   ├── errors/                          # Definição de erros customizados
+│   │   ├── errors.go                    # Tipos de erro e mapeamento HTTP
+│   │   └── errors_test.go               # Testes de error handling
+│   │
+│   └── infra/                           # Infraestrutura (detalhes técnicos)
+│       ├── database/                    # Implementação do repositório
+│       │   ├── db.go                    # Inicialização do banco SQLite
+│       │   ├── product_repository_impl.go # Implementação da interface
+│       │   └── migrations/              # Scripts SQL
+│       │       ├── 001_schema.sql       # Schema das tabelas
+│       │       ├── 002_seed.sql         # Dados iniciais (5 produtos)
+│       │       └── migrations.go        # Embed dos arquivos SQL
+│       │
+│       └── http/                        # Configuração HTTP
+│           ├── router.go                # Setup de rotas e middlewares
+│           ├── router_test.go           # Testes de rotas
+│           ├── error_middleware.go      # Middleware de tratamento de erros
+│           └── error_middleware_test.go # Testes do middleware
+│
 ├── test/
-│   └── integration/             # Testes de integração
-│       └── api_integration_test.go
-├── docs/                        # Documentação
-│   ├── architecture.md          # Diagramas de arquitetura
-│   ├── docs.go                  # Swagger gerado
-│   ├── swagger.json
-│   └── swagger.yaml
-├── .env.example                 # Exemplo de variáveis de ambiente
-├── .env                         # Configurações locais (git ignored)
-├── Dockerfile                   # Multi-stage build
-├── docker-compose.yml           # Orquestração Docker
-├── Makefile                     # Automação de tarefas
-├── go.mod                       # Dependências do projeto
-├── go.sum                       # Checksums das dependências
-└── README.md                    # Este arquivo
+│   └── integration/                     # Testes de integração end-to-end
+│       └── api_integration_test.go      # Testes com banco real
+│
+├── docs/                                # Documentação
+│   ├── architecture.html                # Diagramas interativos (abrir no navegador)
+│   ├── architecture.md                  # Diagramas em Mermaid (GitHub)
+│   ├── architecture.mmd                 # Código Mermaid puro
+│   ├── docs.go                          # Swagger gerado (auto-generated)
+│   ├── swagger.json                     # Especificação OpenAPI
+│   └── swagger.yaml                     # Especificação OpenAPI (YAML)
+│
+├── .env.example                         # Template de variáveis de ambiente
+├── .env                                 # Configurações locais (git ignored)
+├── .dockerignore                        # Arquivos ignorados no build Docker
+├── .gitignore                           # Arquivos ignorados no Git
+├── Dockerfile                           # Multi-stage build otimizado
+├── docker-compose.yml                   # Orquestração Docker
+├── Makefile                             # Automação de tarefas (run, test, docker, etc)
+├── go.mod                               # Dependências do projeto
+├── go.sum                               # Checksums das dependências
+└── README.md                            # Este arquivo
 ```
 
----
+### Organização das Camadas (Clean Architecture)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Camada de Apresentação (HTTP)                              │
+│  • handler/     - Recebe requests, retorna responses        │
+│  • infra/http/  - Router e middlewares                      │
+└─────────────────────────────────┬───────────────────────────┘
+                                  │
+┌─────────────────────────────────▼───────────────────────────┐
+│  Camada de Aplicação (Casos de Uso)                         │
+│  • usecase/     - Lógica de negócio, orquestração           │
+│  • dto/         - Objetos de transferência de dados         │
+└─────────────────────────────────┬───────────────────────────┘
+                                  │
+┌─────────────────────────────────▼───────────────────────────┐
+│  Camada de Domínio (Regras de Negócio)                      │
+│  • entity/      - Modelos e validações de domínio           │
+│  • repository/  - Interfaces (contratos de acesso a dados)  │
+│  • errors/      - Erros de domínio                          │
+└─────────────────────────────────┬───────────────────────────┘
+                                  │
+┌─────────────────────────────────▼───────────────────────────┐
+│  Camada de Infraestrutura (Detalhes Técnicos)               │
+│  • infra/database/ - Implementação SQLite                   │
+│  • config/         - Configurações e variáveis de ambiente  │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ## 🔧 Makefile - Comandos Disponíveis
 
@@ -621,7 +655,7 @@ func (h *Handler) GetProduct(c *gin.Context) {
 
 - **[Diagramas de Arquitetura](docs/architecture.html)** - Visualização interativa da arquitetura
   - **Como visualizar:** Abra o arquivo `docs/architecture.html` em qualquer navegador
-  - Também disponível em Markdown: [docs/architecture.md](docs/architecture.md)
+  - Também disponível em Markdown: [docs/architecture.mmd](docs/architecture.mmd)
 - **[Swagger UI](http://localhost:8080/swagger/index.html)** - Documentação interativa da API (quando o servidor está rodando)
 
 ---

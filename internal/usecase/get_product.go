@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"fmt"
 	"project/internal/dto"
 	"project/internal/errors"
@@ -18,17 +19,17 @@ func NewGetProductUseCase(productRepo repository.ProductRepositoryInterface) *Ge
 	}
 }
 
-func (p *GetProductUseCase) Execute(input dto.ProductInputDTO) (*dto.ProductDTO, error) {
+func (p *GetProductUseCase) Execute(ctx context.Context, input dto.ProductInputDTO) (*dto.ProductDTO, error) {
 	if strings.TrimSpace(input.ID) == "" {
 		return nil, errors.ErrInvalidProductID
 	}
 
-	product, err := p.ProductRepository.GetProduct(input.ID)
+	product, err := p.ProductRepository.GetProduct(ctx, input.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get product: %w", err)
 	}
 
-	images, err := p.ProductRepository.FindImagesByProductID(input.ID)
+	images, err := p.ProductRepository.FindImagesByProductID(ctx, input.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get product images: %w", err)
 	}

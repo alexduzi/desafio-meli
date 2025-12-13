@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"fmt"
 	"project/internal/dto"
 	"project/internal/repository"
@@ -16,8 +17,8 @@ func NewListProductUseCase(productRepo repository.ProductRepositoryInterface) *L
 	}
 }
 
-func (p *ListProductUseCase) Execute() ([]dto.ProductDTO, error) {
-	products, err := p.ProductRepository.ListProducts()
+func (p *ListProductUseCase) Execute(ctx context.Context) ([]dto.ProductDTO, error) {
+	products, err := p.ProductRepository.ListProducts(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list products: %w", err)
 	}

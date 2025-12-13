@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,13 +14,13 @@ import (
 
 type mockListProductUseCase struct{}
 
-func (m *mockListProductUseCase) Execute() ([]dto.ProductDTO, error) {
+func (m *mockListProductUseCase) Execute(ctx context.Context) ([]dto.ProductDTO, error) {
 	return []dto.ProductDTO{}, nil
 }
 
 type mockGetProductUseCase struct{}
 
-func (m *mockGetProductUseCase) Execute(input dto.ProductInputDTO) (*dto.ProductDTO, error) {
+func (m *mockGetProductUseCase) Execute(ctx context.Context, input dto.ProductInputDTO) (*dto.ProductDTO, error) {
 	return &dto.ProductDTO{ID: input.ID}, nil
 }
 

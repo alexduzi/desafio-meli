@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -44,12 +45,12 @@ func (suite *GetProductUseCaseTestSuite) TestGetProductUseCase_Execute_Success()
 		{ID: 2, ProductID: "PROD-123", ImageURL: "http://example.com/image2.jpg", DisplayOrder: 1},
 	}
 
-	suite.repositoryMock.On("GetProduct", mock.Anything).Return(product, nil)
+	suite.repositoryMock.On("GetProduct", mock.Anything, mock.Anything).Return(product, nil)
 
-	suite.repositoryMock.On("FindImagesByProductID", mock.Anything).Return(images, nil)
+	suite.repositoryMock.On("FindImagesByProductID", mock.Anything, mock.Anything).Return(images, nil)
 
 	useCase := NewGetProductUseCase(suite.repositoryMock)
-	result, err := useCase.Execute(dto.ProductInputDTO{ID: "PROD-123"})
+	result, err := useCase.Execute(context.Background(), dto.ProductInputDTO{ID: "PROD-123"})
 
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), result)
@@ -74,7 +75,7 @@ func (suite *GetProductUseCaseTestSuite) TestGetProductUseCase_Execute_EmptyID()
 
 	for _, tt := range tests {
 		suite.T().Run(tt.name, func(t *testing.T) {
-			result, err := useCase.Execute(dto.ProductInputDTO{ID: tt.id})
+			result, err := useCase.Execute(context.Background(), dto.ProductInputDTO{ID: tt.id})
 
 			assert.Error(t, err)
 			assert.Nil(t, result)
@@ -84,10 +85,10 @@ func (suite *GetProductUseCaseTestSuite) TestGetProductUseCase_Execute_EmptyID()
 }
 
 func (suite *GetProductUseCaseTestSuite) TestGetProductUseCase_Execute_ProductNotFound() {
-	suite.repositoryMock.On("GetProduct", mock.Anything).Return(nil, errors.ErrProductNotFound)
+	suite.repositoryMock.On("GetProduct", mock.Anything, mock.Anything).Return(nil, errors.ErrProductNotFound)
 
 	useCase := NewGetProductUseCase(suite.repositoryMock)
-	result, err := useCase.Execute(dto.ProductInputDTO{ID: "PROD-999"})
+	result, err := useCase.Execute(context.Background(), dto.ProductInputDTO{ID: "PROD-999"})
 
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), result)
@@ -95,10 +96,10 @@ func (suite *GetProductUseCaseTestSuite) TestGetProductUseCase_Execute_ProductNo
 }
 
 func (suite *GetProductUseCaseTestSuite) TestGetProductUseCase_Execute_DatabaseError() {
-	suite.repositoryMock.On("GetProduct", mock.Anything).Return(nil, fmt.Errorf("%w: connection failed", errors.ErrDatabaseError))
+	suite.repositoryMock.On("GetProduct", mock.Anything, mock.Anything).Return(nil, fmt.Errorf("%w: connection failed", errors.ErrDatabaseError))
 
 	useCase := NewGetProductUseCase(suite.repositoryMock)
-	result, err := useCase.Execute(dto.ProductInputDTO{ID: "PROD-123"})
+	result, err := useCase.Execute(context.Background(), dto.ProductInputDTO{ID: "PROD-123"})
 
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), result)
@@ -111,12 +112,12 @@ func (suite *GetProductUseCaseTestSuite) TestGetProductUseCase_Execute_ImagesErr
 		Title: "Test Product",
 	}
 
-	suite.repositoryMock.On("GetProduct", mock.Anything).Return(product, nil)
+	suite.repositoryMock.On("GetProduct", mock.Anything, mock.Anything).Return(product, nil)
 
-	suite.repositoryMock.On("FindImagesByProductID", mock.Anything).Return(nil, fmt.Errorf("%w: failed to fetch images", errors.ErrDatabaseError))
+	suite.repositoryMock.On("FindImagesByProductID", mock.Anything, mock.Anything).Return(nil, fmt.Errorf("%w: failed to fetch images", errors.ErrDatabaseError))
 
 	useCase := NewGetProductUseCase(suite.repositoryMock)
-	result, err := useCase.Execute(dto.ProductInputDTO{ID: "PROD-123"})
+	result, err := useCase.Execute(context.Background(), dto.ProductInputDTO{ID: "PROD-123"})
 
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), result)
@@ -141,12 +142,12 @@ func (suite *GetProductUseCaseTestSuite) TestGetProductUseCase_Execute_NoImages(
 
 	images := []entity.ProductImage{}
 
-	suite.repositoryMock.On("GetProduct", mock.Anything).Return(product, nil)
+	suite.repositoryMock.On("GetProduct", mock.Anything, mock.Anything).Return(product, nil)
 
-	suite.repositoryMock.On("FindImagesByProductID", mock.Anything).Return(images, nil)
+	suite.repositoryMock.On("FindImagesByProductID", mock.Anything, mock.Anything).Return(images, nil)
 
 	useCase := NewGetProductUseCase(suite.repositoryMock)
-	result, err := useCase.Execute(dto.ProductInputDTO{ID: "PROD-123"})
+	result, err := useCase.Execute(context.Background(), dto.ProductInputDTO{ID: "PROD-123"})
 
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), result)

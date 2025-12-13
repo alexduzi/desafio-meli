@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"project/internal/entity"
@@ -19,20 +20,20 @@ func NewProductRepository(db *sqlx.DB) *ProductRepository {
 	}
 }
 
-func (p *ProductRepository) ListProducts() ([]entity.Product, error) {
+func (p *ProductRepository) ListProducts(ctx context.Context) ([]entity.Product, error) {
 	products := []entity.Product{}
 
 	query := `
-        SELECT 
+        SELECT
             p.*,
-            (SELECT image_url FROM product_images 
-             WHERE product_id = p.id 
-             ORDER BY display_order ASC 
+            (SELECT image_url FROM product_images
+             WHERE product_id = p.id
+             ORDER BY display_order ASC
              LIMIT 1) as thumbnail
         FROM products p
     `
 
-	err := p.DB.Select(&products, query)
+	err := p.DB.SelectContext(ctx, &products, query)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", errors.ErrDatabaseError, err)
 	}
@@ -40,12 +41,12 @@ func (p *ProductRepository) ListProducts() ([]entity.Product, error) {
 	return products, nil
 }
 
-func (p *ProductRepository) GetProduct(id string) (*entity.Product, error) {
+func (p *ProductRepository) GetProduct(ctx context.Context, id string) (*entity.Product, error) {
 	var product entity.Product
 
 	query := "SELECT * FROM products WHERE id = ?"
 
-	err := p.DB.Get(&product, query, id)
+	err := p.DB.GetContext(ctx, &product, query, id)
 	if err == sql.ErrNoRows {
 		return nil, errors.ErrProductNotFound
 	}
@@ -56,12 +57,12 @@ func (p *ProductRepository) GetProduct(id string) (*entity.Product, error) {
 	return &product, nil
 }
 
-func (p *ProductRepository) FindImagesByProductID(productID string) ([]entity.ProductImage, error) {
+func (p *ProductRepository) FindImagesByProductID(ctx context.Context, productID string) ([]entity.ProductImage, error) {
 	images := []entity.ProductImage{}
 
 	query := "SELECT * FROM product_images WHERE product_id = ? ORDER BY display_order ASC"
 
-	err := p.DB.Select(&images, query, productID)
+	err := p.DB.SelectContext(ctx, &images, query, productID)
 	if err != nil && err != sql.ErrNoRows {
 		return nil, fmt.Errorf("%w: %v", errors.ErrDatabaseError, err)
 	}

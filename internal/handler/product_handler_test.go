@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -16,23 +17,23 @@ import (
 )
 
 type MockListProductUseCase struct {
-	ExecuteFunc func() ([]dto.ProductDTO, error)
+	ExecuteFunc func(ctx context.Context) ([]dto.ProductDTO, error)
 }
 
-func (m *MockListProductUseCase) Execute() ([]dto.ProductDTO, error) {
+func (m *MockListProductUseCase) Execute(ctx context.Context) ([]dto.ProductDTO, error) {
 	if m.ExecuteFunc != nil {
-		return m.ExecuteFunc()
+		return m.ExecuteFunc(ctx)
 	}
 	return []dto.ProductDTO{}, nil
 }
 
 type MockGetProductUseCase struct {
-	ExecuteFunc func(input dto.ProductInputDTO) (*dto.ProductDTO, error)
+	ExecuteFunc func(ctx context.Context, input dto.ProductInputDTO) (*dto.ProductDTO, error)
 }
 
-func (m *MockGetProductUseCase) Execute(input dto.ProductInputDTO) (*dto.ProductDTO, error) {
+func (m *MockGetProductUseCase) Execute(ctx context.Context, input dto.ProductInputDTO) (*dto.ProductDTO, error) {
 	if m.ExecuteFunc != nil {
-		return m.ExecuteFunc(input)
+		return m.ExecuteFunc(ctx, input)
 	}
 	return nil, nil
 }
@@ -63,7 +64,7 @@ func setupTestRouter(handler *ProductHandler) *gin.Engine {
 
 func TestProductHandler_ListProducts_Success(t *testing.T) {
 	mockListUseCase := &MockListProductUseCase{
-		ExecuteFunc: func() ([]dto.ProductDTO, error) {
+		ExecuteFunc: func(ctx context.Context) ([]dto.ProductDTO, error) {
 			return []dto.ProductDTO{
 				{
 					ID:       "PROD-1",
@@ -101,7 +102,7 @@ func TestProductHandler_ListProducts_Success(t *testing.T) {
 
 func TestProductHandler_ListProducts_EmptyList(t *testing.T) {
 	mockListUseCase := &MockListProductUseCase{
-		ExecuteFunc: func() ([]dto.ProductDTO, error) {
+		ExecuteFunc: func(ctx context.Context) ([]dto.ProductDTO, error) {
 			return []dto.ProductDTO{}, nil
 		},
 	}
@@ -125,7 +126,7 @@ func TestProductHandler_ListProducts_EmptyList(t *testing.T) {
 
 func TestProductHandler_ListProducts_DatabaseError(t *testing.T) {
 	mockListUseCase := &MockListProductUseCase{
-		ExecuteFunc: func() ([]dto.ProductDTO, error) {
+		ExecuteFunc: func(ctx context.Context) ([]dto.ProductDTO, error) {
 			return nil, fmt.Errorf("failed to list products: %w", errors.ErrDatabaseError)
 		},
 	}
@@ -147,7 +148,7 @@ func TestProductHandler_ListProducts_DatabaseError(t *testing.T) {
 
 func TestProductHandler_GetProduct_Success(t *testing.T) {
 	mockGetUseCase := &MockGetProductUseCase{
-		ExecuteFunc: func(input dto.ProductInputDTO) (*dto.ProductDTO, error) {
+		ExecuteFunc: func(ctx context.Context, input dto.ProductInputDTO) (*dto.ProductDTO, error) {
 			assert.Equal(t, "PROD-123", input.ID)
 			return &dto.ProductDTO{
 				ID:          "PROD-123",
@@ -184,7 +185,7 @@ func TestProductHandler_GetProduct_Success(t *testing.T) {
 
 func TestProductHandler_GetProduct_InvalidID(t *testing.T) {
 	mockGetUseCase := &MockGetProductUseCase{
-		ExecuteFunc: func(input dto.ProductInputDTO) (*dto.ProductDTO, error) {
+		ExecuteFunc: func(ctx context.Context, input dto.ProductInputDTO) (*dto.ProductDTO, error) {
 			return nil, errors.ErrInvalidProductID
 		},
 	}
@@ -206,7 +207,7 @@ func TestProductHandler_GetProduct_InvalidID(t *testing.T) {
 
 func TestProductHandler_GetProduct_NotFound(t *testing.T) {
 	mockGetUseCase := &MockGetProductUseCase{
-		ExecuteFunc: func(input dto.ProductInputDTO) (*dto.ProductDTO, error) {
+		ExecuteFunc: func(ctx context.Context, input dto.ProductInputDTO) (*dto.ProductDTO, error) {
 			return nil, errors.ErrProductNotFound
 		},
 	}
@@ -229,7 +230,7 @@ func TestProductHandler_GetProduct_NotFound(t *testing.T) {
 
 func TestProductHandler_GetProduct_DatabaseError(t *testing.T) {
 	mockGetUseCase := &MockGetProductUseCase{
-		ExecuteFunc: func(input dto.ProductInputDTO) (*dto.ProductDTO, error) {
+		ExecuteFunc: func(ctx context.Context, input dto.ProductInputDTO) (*dto.ProductDTO, error) {
 			return nil, fmt.Errorf("failed to get product: %w", errors.ErrDatabaseError)
 		},
 	}

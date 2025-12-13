@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 	"project/internal/dto"
 
@@ -8,11 +9,11 @@ import (
 )
 
 type ListProductUseCase interface {
-	Execute() ([]dto.ProductDTO, error)
+	Execute(ctx context.Context) ([]dto.ProductDTO, error)
 }
 
 type GetProductUseCase interface {
-	Execute(input dto.ProductInputDTO) (*dto.ProductDTO, error)
+	Execute(ctx context.Context, input dto.ProductInputDTO) (*dto.ProductDTO, error)
 }
 
 type ProductHandler struct {
@@ -37,7 +38,7 @@ func NewProductHandler(listProductUseCase ListProductUseCase, getProductUseCase 
 // @Failure 500 {object} errors.ErrorResponse
 // @Router /api/v1/products [get]
 func (h *ProductHandler) ListProducts(c *gin.Context) {
-	result, err := h.listProductUseCase.Execute()
+	result, err := h.listProductUseCase.Execute(c.Request.Context())
 	if err != nil {
 		_ = c.Error(err)
 		return
@@ -63,7 +64,7 @@ func (h *ProductHandler) ListProducts(c *gin.Context) {
 func (h *ProductHandler) GetProduct(c *gin.Context) {
 	id := c.Param("id")
 
-	result, err := h.getProductUseCase.Execute(dto.ProductInputDTO{ID: id})
+	result, err := h.getProductUseCase.Execute(c.Request.Context(), dto.ProductInputDTO{ID: id})
 	if err != nil {
 		_ = c.Error(err)
 		return

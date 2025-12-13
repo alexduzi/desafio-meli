@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"project/internal/repository"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -57,10 +59,10 @@ func (suite *ListProductUseCaseTestSuite) TestListProductUseCase_Execute_Success
 		},
 	}
 
-	suite.repositoryMock.On("ListProducts").Return(products, nil)
+	suite.repositoryMock.On("ListProducts", mock.Anything).Return(products, nil)
 
 	useCase := NewListProductUseCase(suite.repositoryMock)
-	result, err := useCase.Execute()
+	result, err := useCase.Execute(context.Background())
 
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), result)
@@ -76,10 +78,10 @@ func (suite *ListProductUseCaseTestSuite) TestListProductUseCase_Execute_Success
 func (suite *ListProductUseCaseTestSuite) TestListProductUseCase_Execute_EmptyList() {
 	products := []entity.Product{}
 
-	suite.repositoryMock.On("ListProducts").Return(products, nil)
+	suite.repositoryMock.On("ListProducts", mock.Anything).Return(products, nil)
 
 	useCase := NewListProductUseCase(suite.repositoryMock)
-	result, err := useCase.Execute()
+	result, err := useCase.Execute(context.Background())
 
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), result)
@@ -87,10 +89,10 @@ func (suite *ListProductUseCaseTestSuite) TestListProductUseCase_Execute_EmptyLi
 }
 
 func (suite *ListProductUseCaseTestSuite) TestListProductUseCase_Execute_DatabaseError() {
-	suite.repositoryMock.On("ListProducts").Return(nil, fmt.Errorf("%w: connection timeout", errors.ErrDatabaseError))
+	suite.repositoryMock.On("ListProducts", mock.Anything).Return(nil, fmt.Errorf("%w: connection timeout", errors.ErrDatabaseError))
 
 	useCase := NewListProductUseCase(suite.repositoryMock)
-	result, err := useCase.Execute()
+	result, err := useCase.Execute(context.Background())
 
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), result)
@@ -117,10 +119,10 @@ func (suite *ListProductUseCaseTestSuite) TestListProductUseCase_Execute_MapsAll
 		},
 	}
 
-	suite.repositoryMock.On("ListProducts").Return(products, nil)
+	suite.repositoryMock.On("ListProducts", mock.Anything).Return(products, nil)
 
 	useCase := NewListProductUseCase(suite.repositoryMock)
-	result, err := useCase.Execute()
+	result, err := useCase.Execute(context.Background())
 
 	assert.NoError(suite.T(), err)
 	assert.Len(suite.T(), result, 1)
@@ -158,10 +160,10 @@ func (suite *ListProductUseCaseTestSuite) TestListProductUseCase_Execute_DoesNot
 		},
 	}
 
-	suite.repositoryMock.On("ListProducts").Return(products, nil)
+	suite.repositoryMock.On("ListProducts", mock.Anything).Return(products, nil)
 
 	useCase := NewListProductUseCase(suite.repositoryMock)
-	result, err := useCase.Execute()
+	result, err := useCase.Execute(context.Background())
 
 	assert.NoError(suite.T(), err)
 	assert.Len(suite.T(), result, 1)

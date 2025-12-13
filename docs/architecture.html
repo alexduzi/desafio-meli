@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API de Produtos - Diagramas de Arquitetura</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #00ADD8;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #555;
+            margin-top: 40px;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 8px;
+        }
+        .diagram-container {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .mermaid {
+            text-align: center;
+        }
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .decision-box {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .decision-box h3 {
+            margin-top: 0;
+            color: #2e7d32;
+        }
+    </style>
+</head>
+<body>
+    <h1>🏗️ API de Produtos - Diagramas de Arquitetura</h1>
+    
+    <div class="note">
+        <strong>📘 Como Usar:</strong> Abra este arquivo HTML em qualquer navegador para visualizar os diagramas interativos da arquitetura.
+    </div>
+
+    <h2>1. Visão Geral da Arquitetura do Sistema</h2>
+    <div class="diagram-container">
+        <div class="mermaid">
+graph TB
+    Client[Cliente/Navegador]
+    
+    subgraph "Camada HTTP"
+        Router[Gin Router]
+        ErrorMW[Middleware de Erros]
+        ProductHandler[Product Handler]
+        HealthHandler[Health Handler]
+    end
+    
+    subgraph "Camada de Negócio"
+        ListUC[UseCase: Listar Produtos]
+        GetUC[UseCase: Buscar Produto]
+    end
+    
+    subgraph "Camada de Dados"
+        RepoInterface[Interface Repository]
+        ProductRepo[Product Repository]
+        SQLite[(SQLite In-Memory)]
+    end
+    
+    Client -->|Requisição HTTP| Router
+    Router --> ErrorMW
+    ErrorMW --> ProductHandler
+    ErrorMW --> HealthHandler
+    
+    ProductHandler -->|Listar| ListUC
+    ProductHandler -->|Buscar por ID| GetUC
+    
+    ListUC --> RepoInterface
+    GetUC --> RepoInterface
+    RepoInterface -.->|implementa| ProductRepo
+    
+    ProductRepo -->|Query SQL| SQLite
+    
+    style Client fill:#e1f5ff
+    style Router fill:#fff4e1
+    style ErrorMW fill:#fff4e1
+    style ListUC fill:#e8f5e9
+    style GetUC fill:#e8f5e9
+    style ProductRepo fill:#fce4ec
+    style SQLite fill:#f3e5f5
+        </div>
+    </div>
+
+    <h2>2. Fluxo de Requisição - Listar Produtos</h2>
+    <div class="diagram-container">
+        <div class="mermaid">
+sequenceDiagram
+    participant C as Cliente
+    participant R as Router
+    participant H as Handler
+    participant UC as UseCase
+    participant Repo as Repository
+    participant DB as SQLite
+
+    C->>R: GET /api/v1/products
+    R->>H: ListProducts()
+    H->>UC: Execute()
+    UC->>Repo: ListProducts()
+    Repo->>DB: SELECT produtos + thumbnail
+    DB-->>Repo: []Product
+    Repo-->>UC: []Product
+    UC-->>H: []ProductDTO
+    H-->>R: Resposta JSON
+    R-->>C: 200 OK + array de produtos
+        </div>
+    </div>
+
+    <h2>3. Fluxo de Requisição - Buscar Produto por ID</h2>
+    <div class="diagram-container">
+        <div class="mermaid">
+sequenceDiagram
+    participant C as Cliente
+    participant R as Router
+    participant H as Handler
+    participant UC as UseCase
+    participant Repo as Repository
+    participant DB as SQLite
+
+    C->>R: GET /api/v1/products/MLB001
+    R->>H: GetProduct(id)
+    H->>UC: Execute(input)
+    
+    UC->>UC: Valida ID
+    
+    UC->>Repo: GetProduct(id)
+    Repo->>DB: SELECT * FROM products WHERE id = ?
+    DB-->>Repo: Product
+    Repo-->>UC: Product
+    
+    UC->>Repo: FindImagesByProductID(id)
+    Repo->>DB: SELECT * FROM product_images WHERE product_id = ?
+    DB-->>Repo: []ProductImage
+    Repo-->>UC: []ProductImage
+    
+    UC->>UC: Mapeia para DTO
+    UC-->>H: ProductDTO + Images
+    H-->>R: Resposta JSON
+    R-->>C: 200 OK + detalhes do produto
+        </div>
+    </div>
+
+    <h2>4. Fluxo de Tratamento de Erros</h2>
+    <div class="diagram-container">
+        <div class="mermaid">
+graph LR
+    A[Erro Ocorre] -->|Qualquer Camada| B[Erro Encapsulado]
+    B -->|fmt.Errorf| C[Propaga para Cima]
+    C --> D[Handler c.Error]
+    D --> E[Middleware de Erros]
+    E -->|Mapeia Tipo de Erro| F{Tipo de Erro?}
+    F -->|Não Encontrado| G[Resposta 404]
+    F -->|Entrada Inválida| H[Resposta 400]
+    F -->|Erro de Banco| I[Resposta 500]
+    F -->|Desconhecido| J[Resposta 500]
+    
+    G --> K[JSON Padrão]
+    H --> K
+    I --> K
+    J --> K
+    
+    K --> L[Resposta ao Cliente]
+    
+    style A fill:#ffebee
+    style E fill:#fff3e0
+    style K fill:#e8f5e9
+    style L fill:#e1f5ff
+        </div>
+    </div>
+
+    <h2>5. Esquema do Banco de Dados</h2>
+    <div class="diagram-container">
+        <div class="mermaid">
+erDiagram
+    PRODUCTS ||--o{ PRODUCT_IMAGES : possui
+    
+    PRODUCTS {
+        text id PK
+        text title
+        text description
+        real price
+        text currency
+        text condition
+        integer stock
+        text seller_id
+        text seller_name
+        text category
+        datetime created_at
+        datetime updated_at
+    }
+    
+    PRODUCT_IMAGES {
+        integer id PK
+        text product_id FK
+        text image_url
+        integer display_order
+    }
+        </div>
+    </div>
+
+    <h2>6. Responsabilidades das Camadas</h2>
+    <div class="diagram-container">
+        <div class="mermaid">
+graph TD
+    subgraph "Camada Handler"
+        H1[Recebe Requisições HTTP]
+        H2[Valida Parâmetros da URL]
+        H3[Chama Use Cases]
+        H4[Retorna Respostas HTTP]
+    end
+    
+    subgraph "Camada UseCase"
+        U1[Lógica de Negócio]
+        U2[Validação de Entrada]
+        U3[Orquestra Chamadas ao Repository]
+        U4[Mapeia Entity para DTO]
+    end
+    
+    subgraph "Camada Repository"
+        D1[Queries no Banco de Dados]
+        D2[Mapeamento de Dados]
+        D3[Tratamento de Erros]
+    end
+    
+    H1 --> H2
+    H2 --> H3
+    H3 --> H4
+    
+    H3 -.-> U1
+    U1 --> U2
+    U2 --> U3
+    U3 --> U4
+    
+    U3 -.-> D1
+    D1 --> D2
+    D2 --> D3
+    
+    style H1 fill:#fff4e1
+    style U1 fill:#e8f5e9
+    style D1 fill:#fce4ec
+        </div>
+    </div>
+
+    <h2>7. Arquitetura de Deploy</h2>
+    <div class="diagram-container">
+        <div class="mermaid">
+graph TB
+    subgraph "Container Docker"
+        App[Aplicação Go :8080]
+        SQLite[(SQLite :memory:)]
+        
+        App --> SQLite
+    end
+    
+    subgraph "Health Check"
+        HC[wget /health]
+        HC -.->|a cada 30s| App
+    end
+    
+    Client[Cliente Externo] -->|HTTP| App
+    App -->|Resposta JSON| Client
+    
+    style App fill:#e8f5e9
+    style SQLite fill:#f3e5f5
+    style HC fill:#fff3e0
+    style Client fill:#e1f5ff
+        </div>
+    </div>
+
+    <h2>📋 Principais Decisões de Design</h2>
+
+    <div class="decision-box">
+        <h3>1. Inversão de Dependência</h3>
+        <ul>
+            <li>Use Cases dependem da <strong>Interface</strong> do Repository, não da implementação concreta</li>
+            <li>Permite trocar facilmente a implementação do banco de dados</li>
+            <li>Possibilita testes unitários isolados com mocks</li>
+        </ul>
+    </div>
+
+    <div class="decision-box">
+        <h3>2. Prevenção do Problema N+1</h3>
+        <ul>
+            <li><strong>Endpoint de listagem:</strong> Retorna apenas <code>thumbnail</code> (uma única query)</li>
+            <li><strong>Endpoint de detalhes:</strong> Retorna array completo de <code>images</code> (2 queries)</li>
+            <li>Melhora a performance em operações de listagem</li>
+        </ul>
+    </div>
+
+    <div class="decision-box">
+        <h3>3. Tratamento Centralizado de Erros</h3>
+        <ul>
+            <li>Erros propagam para cima com contexto encapsulado</li>
+            <li>Middleware mapeia erros para códigos HTTP apropriados</li>
+            <li>Formato de resposta de erro consistente em todos os endpoints</li>
+        </ul>
+    </div>
+
+    <div class="decision-box">
+        <h3>4. Separação Clara de Responsabilidades</h3>
+        <ul>
+            <li><strong>Handler:</strong> Apenas questões HTTP</li>
+            <li><strong>UseCase:</strong> Apenas lógica de negócio</li>
+            <li><strong>Repository:</strong> Apenas acesso a dados</li>
+            <li><strong>Entity:</strong> Modelos de domínio e validação</li>
+        </ul>
+    </div>
+
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            },
+            sequence: {
+                useMaxWidth: true,
+                wrap: true
+            }
+        });
+    </script>
+</body>
+</html>

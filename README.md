@@ -1,6 +1,12 @@
 # API de Produtos - Desafio Técnico
 
-API RESTful para listatem de produtos desenvolvida em Go.
+![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)
+![Test Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)
+![Docker](https://img.shields.io/badge/Docker-Supported-2496ED?style=flat&logo=docker)
+
+API RESTful para listagem de produto desenvolvida em Go com Clean Architecture.
+
+---
 
 ## Índice
 
@@ -34,29 +40,9 @@ Esta API foi desenvolvida como parte de um desafio técnico e implementa um sist
 
 ## Arquitetura
 
-O projeto segue os princípios de **Clean Architecture** (Arquitetura Limpa), separando o código em camadas bem definidas:
+O projeto segue os princípios de **Clean Architecture** (Arquitetura Limpa), separando o código em camadas bem definidas.
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    HTTP Layer (Gin)                      │
-│                  (Handlers/Controllers)                  │
-└────────────────────┬────────────────────────────────────┘
-                     │
-┌────────────────────▼────────────────────────────────────┐
-│                   Use Cases Layer                        │
-│              (Business Logic/Rules)                      │
-└────────────────────┬────────────────────────────────────┘
-                     │
-┌────────────────────▼────────────────────────────────────┐
-│                 Repository Layer                         │
-│            (Data Access Abstraction)                     │
-└────────────────────┬────────────────────────────────────┘
-                     │
-┌────────────────────▼────────────────────────────────────┐
-│              Database Layer (SQLite)                     │
-│                  (In-Memory)                             │
-└─────────────────────────────────────────────────────────┘
-```
+Para visualizar os diagramas completos da arquitetura, consulte: [Architecture Diagrams](docs/architecture.md)
 
 ### Camadas:
 
@@ -92,7 +78,7 @@ O projeto segue os princípios de **Clean Architecture** (Arquitetura Limpa), se
 
 ### Ferramentas de Desenvolvimento
 - **Make** - Automação de tarefas
-- **go test** - Framework de testes nativo
+- **Docker** - Containerização
 
 ---
 
@@ -100,6 +86,7 @@ O projeto segue os princípios de **Clean Architecture** (Arquitetura Limpa), se
 
 - **Go 1.21 ou superior** - [Instalar Go](https://golang.org/doc/install)
 - **Make** (opcional, mas recomendado) - Geralmente já vem instalado em Linux/macOS
+- **Docker** (opcional) - [Instalar Docker](https://docs.docker.com/get-docker/)
 - **Git** - Para clonar o repositório
 
 ---
@@ -113,15 +100,14 @@ git clone <url-do-repositorio>
 cd <nome-do-diretorio>
 ```
 
-### 2. Instale as dependências
+### 2. Configure o ambiente e instale dependências
 
 ```bash
-make deps
-```
+# Opção 1: Usando Make (recomendado)
+make setup
 
-Ou manualmente:
-
-```bash
+# Opção 2: Manualmente
+cp .env.example .env
 go mod download
 go mod tidy
 ```
@@ -136,6 +122,19 @@ make swagger
 
 ## Como Usar
 
+### 🚀 Quick Start
+
+```bash
+# Setup inicial (primeira vez)
+make setup
+
+# Executar a aplicação
+make run
+
+# Ou usando Docker Compose
+make docker-compose-up
+```
+
 ### Usando Make (Recomendado)
 
 O projeto inclui um Makefile com comandos úteis:
@@ -143,6 +142,9 @@ O projeto inclui um Makefile com comandos úteis:
 ```bash
 # Ver todos os comandos disponíveis
 make help
+
+# Setup inicial do projeto
+make setup
 
 # Executar a aplicação
 make run
@@ -165,7 +167,7 @@ make test-coverage-html
 # Limpar arquivos gerados
 make clean
 
-# Executar tudo (deps, swagger, build, test)
+# Executar tudo (setup, swagger, build, test)
 make all
 ```
 
@@ -185,7 +187,7 @@ go test -cover ./internal/...
 go build -o bin/api cmd/api/main.go
 ```
 
-### Usando Docker (Recomendado para Produção)
+### Usando Docker
 
 #### Usando Make + Docker (Mais Fácil)
 
@@ -240,6 +242,22 @@ Após iniciar a aplicação:
 - **Swagger UI**: `http://localhost:8080/swagger/index.html`
 - **Health Check**: `http://localhost:8080/health`
 
+### 📝 Exemplos de Uso com curl
+
+```bash
+# Health check
+curl http://localhost:8080/health
+
+# Listar todos os produtos
+curl http://localhost:8080/api/v1/products
+
+# Obter produto específico
+curl http://localhost:8080/api/v1/products/MLB001
+
+# Com formatação JSON (requer jq)
+curl http://localhost:8080/api/v1/products | jq
+```
+
 ---
 
 ## Testes
@@ -260,7 +278,8 @@ O projeto possui uma suíte de testes abrangente com **~95% de cobertura**:
 
 3. **Cobertura de Código**
    ```bash
-   make test-coverage
+   make test-coverage        # Console output
+   make test-coverage-html   # HTML report
    ```
 
 ### Estrutura de Testes
@@ -286,18 +305,6 @@ test/integration/
 └── api_integration_test.go      # Testes end-to-end
 ```
 
-### Cobertura Atual
-
-```
-✅ internal/entity      → 100.0% coverage
-✅ internal/errors      → 100.0% coverage
-✅ internal/handler     → 100.0% coverage
-✅ internal/infra/http  → 100.0% coverage
-✅ internal/usecase     → 100.0% coverage
-```
-
----
-
 ## Endpoints da API
 
 ### Health Check
@@ -315,7 +322,7 @@ GET /health
 }
 ```
 
-**Uso**: Endpoint para verificar se a API está funcionando corretamente. Útil para monitoramento, health checks do Docker/Kubernetes, e load balancers.
+---
 
 ### Listar Produtos
 
@@ -328,17 +335,17 @@ GET /api/v1/products
 {
   "data": [
     {
-      "id": "PROD-1234567890-123456",
-      "title": "iPhone 15 Pro",
-      "description": "Latest Apple smartphone",
-      "price": 999.99,
+      "id": "MLB001",
+      "title": "iPhone 15 Pro Max 256GB - Titanium Blue",
+      "description": "Latest Apple flagship smartphone...",
+      "price": 1299.99,
       "currency": "USD",
       "condition": "new",
-      "stock": 10,
-      "seller_id": "seller-001",
-      "seller_name": "Apple Store",
-      "category": "Electronics",
-      "thumbnail": "https://example.com/thumb.jpg",
+      "stock": 45,
+      "seller_id": "SELLER001",
+      "seller_name": "TechWorld Store",
+      "category": "Electronics > Smartphones",
+      "thumbnail": "https://images.unsplash.com/photo-1696446702230...",
       "created_at": "2024-01-01T00:00:00Z",
       "updated_at": "2024-01-01T00:00:00Z"
     }
@@ -348,33 +355,44 @@ GET /api/v1/products
 
 **Nota**: O endpoint de listagem retorna apenas o `thumbnail` (não o array completo de imagens) para otimizar performance e evitar o problema N+1.
 
+---
+
 ### Obter Produto por ID
 
 ```http
 GET /api/v1/products/{id}
 ```
 
+**Parâmetros:**
+- `id` (path) - ID do produto (ex: MLB001)
+
 **Resposta de Sucesso (200 OK):**
 ```json
 {
   "data": {
-    "id": "PROD-1234567890-123456",
-    "title": "iPhone 15 Pro",
-    "description": "Latest Apple smartphone",
-    "price": 999.99,
+    "id": "MLB001",
+    "title": "iPhone 15 Pro Max 256GB - Titanium Blue",
+    "description": "Latest Apple flagship smartphone...",
+    "price": 1299.99,
     "currency": "USD",
     "condition": "new",
-    "stock": 10,
-    "seller_id": "seller-001",
-    "seller_name": "Apple Store",
-    "category": "Electronics",
-    "thumbnail": "https://example.com/thumb.jpg",
+    "stock": 45,
+    "seller_id": "SELLER001",
+    "seller_name": "TechWorld Store",
+    "category": "Electronics > Smartphones",
+    "thumbnail": "https://images.unsplash.com/photo-1696446702230...",
     "images": [
       {
         "id": 1,
-        "product_id": "PROD-1234567890-123456",
-        "image_url": "https://example.com/img1.jpg",
+        "product_id": "MLB001",
+        "image_url": "https://images.unsplash.com/photo-1696446702230...",
         "display_order": 0
+      },
+      {
+        "id": 2,
+        "product_id": "MLB001",
+        "image_url": "https://images.unsplash.com/photo-1695048133142...",
+        "display_order": 1
       }
     ],
     "created_at": "2024-01-01T00:00:00Z",
@@ -405,79 +423,109 @@ GET /api/v1/products/{id}
 
 ## Decisões Técnicas
 
-### Clean Architecture
+### 1. Clean Architecture com Inversão de Dependência
 
-**Por quê?**
-- Separação clara de responsabilidades
-- Facilita testes isolados de cada camada
-- Permite trocar implementações sem afetar o core
+**Decisão**: Separar a aplicação em camadas distintas com inversão de dependência.
 
-### SQLite In-Memory (`:memory:`)
+**Justificativa**:
+- **Testabilidade**: Cada camada pode ser testada isoladamente com mocks
+- **Flexibilidade**: Fácil trocar implementações (ex: SQLite → PostgreSQL)
+- **Manutenibilidade**: Mudanças em uma camada não afetam outras
 
-**Por quê?**
-- Atende requisito de persistência simples do desafio
-- Zero configuração necessária
-- Ideal para desenvolvimento e testes
-- Performance excelente para dados temporários
+**Trade-offs**:
+- Mais código boilerplate inicialmente
+- Curva de aprendizado maior
+- **Benefício**: Manutenibilidade e testabilidade no longo prazo compensam a complexidade inicial
 
-**Trade-off**: Dados são perdidos ao reiniciar a aplicação (comportamento esperado para desafios).
+---
 
-### Error Handling Centralizado
+### 2. SQLite In-Memory Database
+
+**Decisão**: Usar SQLite com configuração `:memory:` ao invés de persistência em arquivo.
+
+**Justificativa**:
+- Atende ao requisito do desafio de "simular persistência de dados"
+- Zero configuração necessária - funciona imediatamente em qualquer sistema
+- Perfeito para desenvolvimento e testes
+- Excelente performance para dados temporários
+
+**Trade-offs**:
+- Dados são perdidos ao reiniciar a aplicação (comportamento esperado para este desafio)
+- Não adequado para produção (limitação reconhecida)
+- **Benefício**: Simplicidade e portabilidade para um desafio técnico
+
+---
+
+### 3. Otimização N+1 com Thumbnails
+
+**Problema Identificado**:
+Ao listar produtos, buscar todas as imagens de cada produto criaria N+1 queries:
+```
+1 query para produtos + N queries para imagens = Problema de performance
+```
+
+**Solução Implementada**:
+- **List endpoint**: Retorna apenas `thumbnail` (1 query total)
+- **Detail endpoint**: Retorna array completo de `images` (2 queries)
+
+**SQL Otimizado para Listagem**:
+```sql
+SELECT p.*, 
+       (SELECT image_url FROM product_images 
+        WHERE product_id = p.id 
+        ORDER BY display_order ASC 
+        LIMIT 1) as thumbnail
+FROM products p
+```
+
+**Impacto**:
+- ~10x melhor performance em operações de listagem
+- Menor tamanho de payload
+- Melhor experiência do usuário
+
+---
+
+### 4. Error Handling Centralizado
+
+**Decisão**: Implementar middleware de tratamento de erros ao invés de tratar erros em cada handler.
+
+**Benefícios**:
+- Formato de resposta de erro consistente em todos os endpoints
+- Código de handlers mais limpo (apenas retornam erros)
+- Ponto único para logging/monitoring
+- Fácil estender com serviços de rastreamento de erros
 
 **Implementação**:
 ```go
-// Middleware processa erros automaticamente
-func ErrorHandlerMiddleware() gin.HandlerFunc {
-    // Mapeia erros de domínio para status HTTP
-    // Retorna JSON padronizado
+// Handler apenas retorna o erro
+func (h *Handler) GetProduct(c *gin.Context) {
+    result, err := h.useCase.Execute(input)
+    if err != nil {
+        _ = c.Error(err)  // Middleware cuida do resto
+        return
+    }
+    c.JSON(200, result)
 }
 ```
 
-**Vantagens**:
-- Respostas de erro consistentes
-- Handlers mais limpos
-- Fácil adicionar logging/monitoring
+---
 
-### Otimização N+1 com Thumbnails
+### 5. Docker Multi-Stage Build
 
-**Problema**: Ao listar produtos, buscar todas as imagens de cada produto seria ineficiente:
-```
-1 query para produtos + N queries para imagens = N+1 queries
-```
-
-**Solução**:
-- **List Endpoint**: Retorna apenas `thumbnail` (1 query total)
-- **Get Endpoint**: Retorna array completo de `images` (2 queries)
-
-**Resultado**: Performance ~10x melhor em listagens.
-
-### Docker Multi-Stage Build
-
-**Por quê?**
-
-- **Imagem otimizada**: Build stage com ~500MB, runtime final com ~20MB
-- **Segurança**: Container roda com usuário non-root (appuser)
-- **Health checks**: Monitoramento automático usando endpoint `/health`
-- **CGO habilitado**: Suporte completo ao SQLite com driver nativo
+**Decisão**: Usar multi-stage build com práticas de segurança.
 
 **Características**:
+- Build stage: ~500MB (compilador Go + ferramentas)
+- Runtime stage: ~20MB (Alpine + binário apenas)
+- Execução com usuário non-root
+- Integração com health check endpoint
 
-```dockerfile
-# Build stage - Go 1.24 + ferramentas de build
-FROM golang:1.24-alpine AS builder
-# ... compila aplicação ...
+**Benefícios de Segurança**:
+- Superfície de ataque mínima
+- Sem ferramentas desnecessárias na imagem de produção
+- Segue best practices do Docker
 
-# Runtime stage - Alpine mínimo
-FROM alpine:latest
-# ... apenas o binário + libs runtime ...
-USER appuser  # Roda como non-root
-```
-
-**Benefícios**:
-
-- Deployment rápido e seguro
-- Menor superfície de ataque
-- Compatível com Kubernetes, Docker Swarm, etc.
+---
 
 ## Estrutura do Projeto
 
@@ -485,8 +533,7 @@ USER appuser  # Roda como non-root
 .
 ├── cmd/
 │   └── api/
-│       ├── main.go              # Entry point da aplicação
-│       └── main_test.go         # [Movido para test/integration]
+│       └── main.go              # Entry point da aplicação
 ├── internal/
 │   ├── entity/                  # Entidades de domínio
 │   │   ├── product.go
@@ -496,9 +543,11 @@ USER appuser  # Roda como non-root
 │   │   └── errors_test.go
 │   ├── handler/                 # HTTP handlers (controllers)
 │   │   ├── product_handler.go
-│   │   └── product_handler_test.go
+│   │   ├── product_handler_test.go
+│   │   ├── health_handler.go
+│   │   └── health_handler_test.go
 │   ├── usecase/                 # Casos de uso (business logic)
-│   │   ├── product_repository.go      # Interface do repositório
+│   │   ├── product_repository.go
 │   │   ├── get_product.go
 │   │   ├── get_product_test.go
 │   │   ├── list_product.go
@@ -509,6 +558,8 @@ USER appuser  # Roda como non-root
 │       │   ├── db.go
 │       │   ├── product_repository.go
 │       │   └── migrations/
+│       │       ├── 001_schema.sql
+│       │       ├── 002_seed.sql
 │       │       └── migrations.go
 │       └── http/                # Configuração HTTP
 │           ├── router.go
@@ -518,23 +569,20 @@ USER appuser  # Roda como non-root
 ├── test/
 │   └── integration/             # Testes de integração
 │       └── api_integration_test.go
-├── docs/                        # Documentação Swagger (gerada)
-│   ├── docs.go
+├── docs/                        # Documentação
+│   ├── architecture.md          # Diagramas de arquitetura
+│   ├── docs.go                  # Swagger gerado
 │   ├── swagger.json
 │   └── swagger.yaml
+├── .env.example                 # Exemplo de variáveis de ambiente
+├── .env                         # Configurações locais (git ignored)
+├── Dockerfile                   # Multi-stage build
+├── docker-compose.yml           # Orquestração Docker
 ├── Makefile                     # Automação de tarefas
 ├── go.mod                       # Dependências do projeto
 ├── go.sum                       # Checksums das dependências
 └── README.md                    # Este arquivo
 ```
-
-### Convenções de Nomenclatura
-
-- **Handlers**: Terminam com `Handler` (ex: `ProductHandler`)
-- **Use Cases**: Terminam com `UseCase` (ex: `GetProductUseCase`)
-- **Repositories**: Terminam com `Repository` (ex: `ProductRepository`)
-- **DTOs**: Terminam com `DTO` (ex: `ProductDTO`)
-- **Testes**: Terminam com `_test.go`
 
 ---
 
@@ -542,88 +590,45 @@ USER appuser  # Roda como non-root
 
 | Comando | Descrição |
 |---------|-----------|
+| **Setup** | |
+| `make setup` | Setup inicial do projeto (copia .env, instala deps) |
 | **Desenvolvimento Local** | |
-| `make help` | Mostra todos os comandos disponíveis |
 | `make run` | Executa a aplicação localmente |
 | `make build` | Compila o binário da aplicação |
 | `make swagger` | Gera/atualiza documentação Swagger |
 | **Testes** | |
 | `make test` | Executa todos os testes (unitários + integração) |
 | `make test-unit` | Executa apenas testes unitários (rápido, sem DB) |
-| `make test-integration` | Executa apenas testes de integração (requer DB) |
+| `make test-integration` | Executa apenas testes de integração |
 | `make test-coverage` | Executa testes e mostra cobertura |
 | `make test-coverage-html` | Gera relatório HTML de cobertura |
 | **Docker** | |
 | `make docker-build` | Constrói a imagem Docker |
 | `make docker-run` | Executa o container Docker |
-| `make docker-stop` | Para e remove o container Docker |
+| `make docker-stop` | Para e remove o container |
 | `make docker-logs` | Visualiza logs do container |
 | `make docker-compose-up` | Inicia aplicação com Docker Compose |
-| `make docker-compose-down` | Para aplicação com Docker Compose |
-| `make docker-compose-logs` | Visualiza logs do Docker Compose |
-| `make docker-clean` | Remove imagens e containers Docker |
+| `make docker-compose-down` | Para aplicação Docker Compose |
+| `make docker-clean` | Remove imagens e containers |
 | **Utilitários** | |
-| `make clean` | Remove arquivos gerados (binários, coverage) |
+| `make clean` | Remove arquivos gerados |
 | `make deps` | Baixa e organiza dependências |
-| `make all` | Executa deps, swagger, build e test |
+| `make all` | Executa setup, swagger, build e test |
 
 ---
 
-## Bibliotecas de Terceiros
+## 📚 Documentação Adicional
 
-### Dependências de Produção
-
-```go
-require (
-    github.com/gin-gonic/gin v1.9.1           // Framework web HTTP
-    github.com/jmoiron/sqlx v1.3.5            // Extensions para database/sql
-    github.com/mattn/go-sqlite3 v1.14.18      // Driver SQLite
-    github.com/swaggo/files v1.0.1            // Swagger UI files
-    github.com/swaggo/gin-swagger v1.6.0      // Integração Swagger + Gin
-    github.com/swaggo/swag v1.16.2            // Gerador de docs Swagger
-)
-```
-
-### Dependências de Teste
-
-```go
-require (
-    github.com/stretchr/testify v1.8.4        // Assertions e mocks
-)
-```
-
----
-
-## 📝 Notas Adicionais
-
-### Swagger/OpenAPI
-
-A documentação Swagger é gerada automaticamente a partir de comentários no código:
-
-```go
-// @Summary List all products
-// @Description Get a list of all products
-// @Tags products
-// @Accept json
-// @Produce json
-// @Success 200 {object} map[string]interface{}
-// @Router /products [get]
-func (h *ProductHandler) ListProducts(c *gin.Context) { ... }
-```
-
-### Testes
-
-Os testes são organizados em:
-- **Testes Unitários**: Não dependem de DB, usam mocks
-- **Testes de Integração**: Usam DB real (in-memory)
-
-Use `make test-unit` para feedback rápido durante desenvolvimento.
+- **[Diagramas de Arquitetura](docs/architecture.html)** - Visualização interativa da arquitetura
+  - **Como visualizar:** Abra o arquivo `docs/architecture.html` em qualquer navegador
+  - Também disponível em Markdown: [docs/architecture.md](docs/architecture.md)
+- **[Swagger UI](http://localhost:8080/swagger/index.html)** - Documentação interativa da API (quando o servidor está rodando)
 
 ---
 
 ## 👤 Autor
 
-Alex Duzi
+Alex Duzi - duzihd@gmail.com
 
 ---
 

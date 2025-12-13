@@ -1,8 +1,11 @@
-.PHONY: help run build swagger test test-unit test-integration test-coverage test-coverage-html clean deps docker-build docker-run docker-stop docker-logs docker-compose-up docker-compose-down docker-compose-logs docker-clean
+.PHONY: help setup run build swagger test test-unit test-integration test-coverage test-coverage-html clean deps docker-build docker-run docker-stop docker-logs docker-compose-up docker-compose-down docker-compose-logs docker-clean
 
 # Default target
 help:
 	@echo "Available targets:"
+	@echo ""
+	@echo "Setup:"
+	@echo "  make setup               - Initial project setup (copy .env, install deps)"
 	@echo ""
 	@echo "Local Development:"
 	@echo "  make run                 - Run the application locally"
@@ -29,7 +32,22 @@ help:
 	@echo "Utilities:"
 	@echo "  make clean               - Clean build artifacts and test cache"
 	@echo "  make deps                - Download and tidy dependencies"
-	@echo "  make all                 - Run deps, swagger, build, and test"
+	@echo "  make all                 - Run setup, deps, swagger, build, and test"
+
+# Initial project setup
+setup:
+	@echo "Setting up project..."
+	@if [ ! -f .env ]; then \
+		echo "Creating .env file from .env.example..."; \
+		cp .env.example .env; \
+		echo ".env file created successfully!"; \
+	else \
+		echo ".env file already exists, skipping..."; \
+	fi
+	@echo "Installing dependencies..."
+	@go mod download
+	@go mod tidy
+	@echo "Setup complete! Run 'make run' to start the application."
 
 # Run the application locally
 run:
@@ -98,8 +116,8 @@ deps:
 	go mod tidy
 	@echo "Dependencies updated"
 
-# Run everything: deps, swagger, build, and test
-all: deps swagger build test
+# Run everything: setup, deps, swagger, build, and test
+all: setup swagger build test
 	@echo "All tasks completed successfully!"
 
 # Docker commands

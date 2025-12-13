@@ -40,7 +40,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.ProductListResponse"
+                            "$ref": "#/definitions/dto.ProductListResponse"
                         }
                     },
                     "500": {
@@ -79,7 +79,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.ProductResponse"
+                            "$ref": "#/definitions/dto.ProductResponse"
                         }
                     },
                     "400": {
@@ -125,6 +125,109 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "dto.ProductDTO": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string",
+                    "example": "Electronics \u003e Smartphones"
+                },
+                "condition": {
+                    "type": "string",
+                    "example": "new"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "currency": {
+                    "type": "string",
+                    "example": "USD"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Latest Apple flagship smartphone with A17 Pro chip"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "MLB001"
+                },
+                "images": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ProductImageDTO"
+                    }
+                },
+                "price": {
+                    "type": "number",
+                    "example": 1299.99
+                },
+                "seller_id": {
+                    "type": "string",
+                    "example": "SELLER001"
+                },
+                "seller_name": {
+                    "type": "string",
+                    "example": "TechWorld Store"
+                },
+                "stock": {
+                    "type": "integer",
+                    "example": 45
+                },
+                "thumbnail": {
+                    "type": "string",
+                    "example": "https://images.unsplash.com/photo-1696446702230-a8ff49103cd1?w=800"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "iPhone 15 Pro Max 256GB - Titanium Blue"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                }
+            }
+        },
+        "dto.ProductImageDTO": {
+            "type": "object",
+            "properties": {
+                "display_order": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "image_url": {
+                    "type": "string",
+                    "example": "https://images.unsplash.com/photo-1696446702230-a8ff49103cd1?w=800"
+                },
+                "product_id": {
+                    "type": "string",
+                    "example": "MLB001"
+                }
+            }
+        },
+        "dto.ProductListResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ProductDTO"
+                    }
+                }
+            }
+        },
+        "dto.ProductResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/dto.ProductDTO"
+                }
+            }
+        },
         "errors.ErrorResponse": {
             "type": "object",
             "properties": {
@@ -160,109 +263,6 @@ const docTemplate = `{
                 "timestamp": {
                     "type": "string",
                     "example": "2024-01-01T00:00:00Z"
-                }
-            }
-        },
-        "handler.ProductListResponse": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/usecase.ProductDTO"
-                    }
-                }
-            }
-        },
-        "handler.ProductResponse": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/usecase.ProductDTO"
-                }
-            }
-        },
-        "usecase.ProductDTO": {
-            "type": "object",
-            "properties": {
-                "category": {
-                    "type": "string",
-                    "example": "Electronics \u003e Smartphones"
-                },
-                "condition": {
-                    "type": "string",
-                    "example": "new"
-                },
-                "created_at": {
-                    "type": "string",
-                    "example": "2024-01-01T00:00:00Z"
-                },
-                "currency": {
-                    "type": "string",
-                    "example": "USD"
-                },
-                "description": {
-                    "type": "string",
-                    "example": "Latest Apple flagship smartphone with A17 Pro chip"
-                },
-                "id": {
-                    "type": "string",
-                    "example": "MLB001"
-                },
-                "images": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/usecase.ProductImageDTO"
-                    }
-                },
-                "price": {
-                    "type": "number",
-                    "example": 1299.99
-                },
-                "seller_id": {
-                    "type": "string",
-                    "example": "SELLER001"
-                },
-                "seller_name": {
-                    "type": "string",
-                    "example": "TechWorld Store"
-                },
-                "stock": {
-                    "type": "integer",
-                    "example": 45
-                },
-                "thumbnail": {
-                    "type": "string",
-                    "example": "https://images.unsplash.com/photo-1696446702230-a8ff49103cd1?w=800"
-                },
-                "title": {
-                    "type": "string",
-                    "example": "iPhone 15 Pro Max 256GB - Titanium Blue"
-                },
-                "updated_at": {
-                    "type": "string",
-                    "example": "2024-01-01T00:00:00Z"
-                }
-            }
-        },
-        "usecase.ProductImageDTO": {
-            "type": "object",
-            "properties": {
-                "display_order": {
-                    "type": "integer",
-                    "example": 0
-                },
-                "id": {
-                    "type": "integer",
-                    "example": 1
-                },
-                "image_url": {
-                    "type": "string",
-                    "example": "https://images.unsplash.com/photo-1696446702230-a8ff49103cd1?w=800"
-                },
-                "product_id": {
-                    "type": "string",
-                    "example": "MLB001"
                 }
             }
         }

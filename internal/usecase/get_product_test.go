@@ -5,8 +5,10 @@ import (
 	"testing"
 	"time"
 
+	"project/internal/dto"
 	"project/internal/entity"
 	"project/internal/errors"
+	"project/internal/repository"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -15,11 +17,11 @@ import (
 
 type GetProductUseCaseTestSuite struct {
 	suite.Suite
-	repositoryMock *MockProductRepository
+	repositoryMock *repository.MockProductRepository
 }
 
 func (suite *GetProductUseCaseTestSuite) BeforeTest(suiteName, testName string) {
-	suite.repositoryMock = new(MockProductRepository)
+	suite.repositoryMock = new(repository.MockProductRepository)
 }
 
 func (suite *GetProductUseCaseTestSuite) TestGetProductUseCase_Execute_Success() {
@@ -47,7 +49,7 @@ func (suite *GetProductUseCaseTestSuite) TestGetProductUseCase_Execute_Success()
 	suite.repositoryMock.On("FindImagesByProductID", mock.Anything).Return(images, nil)
 
 	useCase := NewGetProductUseCase(suite.repositoryMock)
-	result, err := useCase.Execute(ProductInputDTO{ID: "PROD-123"})
+	result, err := useCase.Execute(dto.ProductInputDTO{ID: "PROD-123"})
 
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), result)
@@ -72,7 +74,7 @@ func (suite *GetProductUseCaseTestSuite) TestGetProductUseCase_Execute_EmptyID()
 
 	for _, tt := range tests {
 		suite.T().Run(tt.name, func(t *testing.T) {
-			result, err := useCase.Execute(ProductInputDTO{ID: tt.id})
+			result, err := useCase.Execute(dto.ProductInputDTO{ID: tt.id})
 
 			assert.Error(t, err)
 			assert.Nil(t, result)
@@ -85,7 +87,7 @@ func (suite *GetProductUseCaseTestSuite) TestGetProductUseCase_Execute_ProductNo
 	suite.repositoryMock.On("GetProduct", mock.Anything).Return(nil, errors.ErrProductNotFound)
 
 	useCase := NewGetProductUseCase(suite.repositoryMock)
-	result, err := useCase.Execute(ProductInputDTO{ID: "PROD-999"})
+	result, err := useCase.Execute(dto.ProductInputDTO{ID: "PROD-999"})
 
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), result)
@@ -96,7 +98,7 @@ func (suite *GetProductUseCaseTestSuite) TestGetProductUseCase_Execute_DatabaseE
 	suite.repositoryMock.On("GetProduct", mock.Anything).Return(nil, fmt.Errorf("%w: connection failed", errors.ErrDatabaseError))
 
 	useCase := NewGetProductUseCase(suite.repositoryMock)
-	result, err := useCase.Execute(ProductInputDTO{ID: "PROD-123"})
+	result, err := useCase.Execute(dto.ProductInputDTO{ID: "PROD-123"})
 
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), result)
@@ -114,7 +116,7 @@ func (suite *GetProductUseCaseTestSuite) TestGetProductUseCase_Execute_ImagesErr
 	suite.repositoryMock.On("FindImagesByProductID", mock.Anything).Return(nil, fmt.Errorf("%w: failed to fetch images", errors.ErrDatabaseError))
 
 	useCase := NewGetProductUseCase(suite.repositoryMock)
-	result, err := useCase.Execute(ProductInputDTO{ID: "PROD-123"})
+	result, err := useCase.Execute(dto.ProductInputDTO{ID: "PROD-123"})
 
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), result)
@@ -144,7 +146,7 @@ func (suite *GetProductUseCaseTestSuite) TestGetProductUseCase_Execute_NoImages(
 	suite.repositoryMock.On("FindImagesByProductID", mock.Anything).Return(images, nil)
 
 	useCase := NewGetProductUseCase(suite.repositoryMock)
-	result, err := useCase.Execute(ProductInputDTO{ID: "PROD-123"})
+	result, err := useCase.Execute(dto.ProductInputDTO{ID: "PROD-123"})
 
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), result)

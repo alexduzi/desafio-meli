@@ -7,6 +7,7 @@ import (
 
 	"project/internal/entity"
 	"project/internal/errors"
+	"project/internal/repository"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -14,11 +15,11 @@ import (
 
 type ListProductUseCaseTestSuite struct {
 	suite.Suite
-	repositoryMock *MockProductRepository
+	repositoryMock *repository.MockProductRepository
 }
 
 func (suite *ListProductUseCaseTestSuite) BeforeTest(suiteName, testName string) {
-	suite.repositoryMock = new(MockProductRepository)
+	suite.repositoryMock = new(repository.MockProductRepository)
 }
 
 func (suite *ListProductUseCaseTestSuite) TestListProductUseCase_Execute_Success() {

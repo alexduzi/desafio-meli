@@ -8,29 +8,29 @@ import (
 	"testing"
 	"time"
 
+	"project/internal/dto"
 	"project/internal/errors"
-	"project/internal/usecase"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )
 
 type MockListProductUseCase struct {
-	ExecuteFunc func() ([]usecase.ProductDTO, error)
+	ExecuteFunc func() ([]dto.ProductDTO, error)
 }
 
-func (m *MockListProductUseCase) Execute() ([]usecase.ProductDTO, error) {
+func (m *MockListProductUseCase) Execute() ([]dto.ProductDTO, error) {
 	if m.ExecuteFunc != nil {
 		return m.ExecuteFunc()
 	}
-	return []usecase.ProductDTO{}, nil
+	return []dto.ProductDTO{}, nil
 }
 
 type MockGetProductUseCase struct {
-	ExecuteFunc func(input usecase.ProductInputDTO) (*usecase.ProductDTO, error)
+	ExecuteFunc func(input dto.ProductInputDTO) (*dto.ProductDTO, error)
 }
 
-func (m *MockGetProductUseCase) Execute(input usecase.ProductInputDTO) (*usecase.ProductDTO, error) {
+func (m *MockGetProductUseCase) Execute(input dto.ProductInputDTO) (*dto.ProductDTO, error) {
 	if m.ExecuteFunc != nil {
 		return m.ExecuteFunc(input)
 	}
@@ -63,8 +63,8 @@ func setupTestRouter(handler *ProductHandler) *gin.Engine {
 
 func TestProductHandler_ListProducts_Success(t *testing.T) {
 	mockListUseCase := &MockListProductUseCase{
-		ExecuteFunc: func() ([]usecase.ProductDTO, error) {
-			return []usecase.ProductDTO{
+		ExecuteFunc: func() ([]dto.ProductDTO, error) {
+			return []dto.ProductDTO{
 				{
 					ID:       "PROD-1",
 					Title:    "Product 1",
@@ -101,8 +101,8 @@ func TestProductHandler_ListProducts_Success(t *testing.T) {
 
 func TestProductHandler_ListProducts_EmptyList(t *testing.T) {
 	mockListUseCase := &MockListProductUseCase{
-		ExecuteFunc: func() ([]usecase.ProductDTO, error) {
-			return []usecase.ProductDTO{}, nil
+		ExecuteFunc: func() ([]dto.ProductDTO, error) {
+			return []dto.ProductDTO{}, nil
 		},
 	}
 
@@ -125,7 +125,7 @@ func TestProductHandler_ListProducts_EmptyList(t *testing.T) {
 
 func TestProductHandler_ListProducts_DatabaseError(t *testing.T) {
 	mockListUseCase := &MockListProductUseCase{
-		ExecuteFunc: func() ([]usecase.ProductDTO, error) {
+		ExecuteFunc: func() ([]dto.ProductDTO, error) {
 			return nil, fmt.Errorf("failed to list products: %w", errors.ErrDatabaseError)
 		},
 	}
@@ -147,15 +147,15 @@ func TestProductHandler_ListProducts_DatabaseError(t *testing.T) {
 
 func TestProductHandler_GetProduct_Success(t *testing.T) {
 	mockGetUseCase := &MockGetProductUseCase{
-		ExecuteFunc: func(input usecase.ProductInputDTO) (*usecase.ProductDTO, error) {
+		ExecuteFunc: func(input dto.ProductInputDTO) (*dto.ProductDTO, error) {
 			assert.Equal(t, "PROD-123", input.ID)
-			return &usecase.ProductDTO{
+			return &dto.ProductDTO{
 				ID:          "PROD-123",
 				Title:       "iPhone 15",
 				Description: "Latest iPhone",
 				Price:       999.99,
 				Currency:    "USD",
-				Images: []usecase.ProductImageDTO{
+				Images: []dto.ProductImageDTO{
 					{ID: 1, ImageURL: "http://example.com/img.jpg"},
 				},
 			}, nil
@@ -184,7 +184,7 @@ func TestProductHandler_GetProduct_Success(t *testing.T) {
 
 func TestProductHandler_GetProduct_InvalidID(t *testing.T) {
 	mockGetUseCase := &MockGetProductUseCase{
-		ExecuteFunc: func(input usecase.ProductInputDTO) (*usecase.ProductDTO, error) {
+		ExecuteFunc: func(input dto.ProductInputDTO) (*dto.ProductDTO, error) {
 			return nil, errors.ErrInvalidProductID
 		},
 	}
@@ -206,7 +206,7 @@ func TestProductHandler_GetProduct_InvalidID(t *testing.T) {
 
 func TestProductHandler_GetProduct_NotFound(t *testing.T) {
 	mockGetUseCase := &MockGetProductUseCase{
-		ExecuteFunc: func(input usecase.ProductInputDTO) (*usecase.ProductDTO, error) {
+		ExecuteFunc: func(input dto.ProductInputDTO) (*dto.ProductDTO, error) {
 			return nil, errors.ErrProductNotFound
 		},
 	}
@@ -229,7 +229,7 @@ func TestProductHandler_GetProduct_NotFound(t *testing.T) {
 
 func TestProductHandler_GetProduct_DatabaseError(t *testing.T) {
 	mockGetUseCase := &MockGetProductUseCase{
-		ExecuteFunc: func(input usecase.ProductInputDTO) (*usecase.ProductDTO, error) {
+		ExecuteFunc: func(input dto.ProductInputDTO) (*dto.ProductDTO, error) {
 			return nil, fmt.Errorf("failed to get product: %w", errors.ErrDatabaseError)
 		},
 	}

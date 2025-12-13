@@ -1,5 +1,78 @@
 basePath: /
 definitions:
+  dto.ProductDTO:
+    properties:
+      category:
+        example: Electronics > Smartphones
+        type: string
+      condition:
+        example: new
+        type: string
+      created_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      currency:
+        example: USD
+        type: string
+      description:
+        example: Latest Apple flagship smartphone with A17 Pro chip
+        type: string
+      id:
+        example: MLB001
+        type: string
+      images:
+        items:
+          $ref: '#/definitions/dto.ProductImageDTO'
+        type: array
+      price:
+        example: 1299.99
+        type: number
+      seller_id:
+        example: SELLER001
+        type: string
+      seller_name:
+        example: TechWorld Store
+        type: string
+      stock:
+        example: 45
+        type: integer
+      thumbnail:
+        example: https://images.unsplash.com/photo-1696446702230-a8ff49103cd1?w=800
+        type: string
+      title:
+        example: iPhone 15 Pro Max 256GB - Titanium Blue
+        type: string
+      updated_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+    type: object
+  dto.ProductImageDTO:
+    properties:
+      display_order:
+        example: 0
+        type: integer
+      id:
+        example: 1
+        type: integer
+      image_url:
+        example: https://images.unsplash.com/photo-1696446702230-a8ff49103cd1?w=800
+        type: string
+      product_id:
+        example: MLB001
+        type: string
+    type: object
+  dto.ProductListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/dto.ProductDTO'
+        type: array
+    type: object
+  dto.ProductResponse:
+    properties:
+      data:
+        $ref: '#/definitions/dto.ProductDTO'
+    type: object
   errors.ErrorResponse:
     properties:
       code:
@@ -27,79 +100,6 @@ definitions:
         example: "2024-01-01T00:00:00Z"
         type: string
     type: object
-  handler.ProductListResponse:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/usecase.ProductDTO'
-        type: array
-    type: object
-  handler.ProductResponse:
-    properties:
-      data:
-        $ref: '#/definitions/usecase.ProductDTO'
-    type: object
-  usecase.ProductDTO:
-    properties:
-      category:
-        example: Electronics > Smartphones
-        type: string
-      condition:
-        example: new
-        type: string
-      created_at:
-        example: "2024-01-01T00:00:00Z"
-        type: string
-      currency:
-        example: USD
-        type: string
-      description:
-        example: Latest Apple flagship smartphone with A17 Pro chip
-        type: string
-      id:
-        example: MLB001
-        type: string
-      images:
-        items:
-          $ref: '#/definitions/usecase.ProductImageDTO'
-        type: array
-      price:
-        example: 1299.99
-        type: number
-      seller_id:
-        example: SELLER001
-        type: string
-      seller_name:
-        example: TechWorld Store
-        type: string
-      stock:
-        example: 45
-        type: integer
-      thumbnail:
-        example: https://images.unsplash.com/photo-1696446702230-a8ff49103cd1?w=800
-        type: string
-      title:
-        example: iPhone 15 Pro Max 256GB - Titanium Blue
-        type: string
-      updated_at:
-        example: "2024-01-01T00:00:00Z"
-        type: string
-    type: object
-  usecase.ProductImageDTO:
-    properties:
-      display_order:
-        example: 0
-        type: integer
-      id:
-        example: 1
-        type: integer
-      image_url:
-        example: https://images.unsplash.com/photo-1696446702230-a8ff49103cd1?w=800
-        type: string
-      product_id:
-        example: MLB001
-        type: string
-    type: object
 host: localhost:8080
 info:
   contact:
@@ -124,7 +124,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.ProductListResponse'
+            $ref: '#/definitions/dto.ProductListResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -150,7 +150,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.ProductResponse'
+            $ref: '#/definitions/dto.ProductResponse'
         "400":
           description: Bad Request
           schema:

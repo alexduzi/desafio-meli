@@ -2,7 +2,6 @@ package entity
 
 import (
 	"fmt"
-	"math/rand"
 	"time"
 )
 
@@ -28,12 +27,12 @@ type Product struct {
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
 }
 
-func NewProduct(title, description string, price float64, currency, condition string, stock int, sellerID, sellerName, category string) (*Product, error) {
-	newId := generateProductID()
+func NewProduct(id, title, description string, price float64, currency, condition string, stock int, sellerID, sellerName, category string) (*Product, error) {
+
 	now := time.Now()
 
 	product := &Product{
-		ID:          newId,
+		ID:          id,
 		Title:       title,
 		Description: description,
 		Price:       price,
@@ -80,12 +79,6 @@ func (p *Product) Validate() error {
 	}
 
 	return nil
-}
-
-func generateProductID() string {
-	timestamp := time.Now().UnixNano()
-	random := rand.Int63n(999999)
-	return fmt.Sprintf("PROD-%d-%06d", timestamp, random)
 }
 
 type ProductImage struct {

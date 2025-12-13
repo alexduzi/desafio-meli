@@ -1,10 +1,16 @@
-package usecase
+package repository
 
 import (
 	"project/internal/entity"
 
 	"github.com/stretchr/testify/mock"
 )
+
+type ProductRepositoryInterface interface {
+	ListProducts() ([]entity.Product, error)
+	GetProduct(id string) (*entity.Product, error)
+	FindImagesByProductID(productID string) ([]entity.ProductImage, error)
+}
 
 type MockProductRepository struct {
 	mock.Mock

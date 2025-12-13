@@ -5,22 +5,22 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"project/internal/dto"
 	"project/internal/handler"
-	"project/internal/usecase"
 
 	"github.com/stretchr/testify/assert"
 )
 
 type mockListProductUseCase struct{}
 
-func (m *mockListProductUseCase) Execute() ([]usecase.ProductDTO, error) {
-	return []usecase.ProductDTO{}, nil
+func (m *mockListProductUseCase) Execute() ([]dto.ProductDTO, error) {
+	return []dto.ProductDTO{}, nil
 }
 
 type mockGetProductUseCase struct{}
 
-func (m *mockGetProductUseCase) Execute(input usecase.ProductInputDTO) (*usecase.ProductDTO, error) {
-	return &usecase.ProductDTO{ID: input.ID}, nil
+func (m *mockGetProductUseCase) Execute(input dto.ProductInputDTO) (*dto.ProductDTO, error) {
+	return &dto.ProductDTO{ID: input.ID}, nil
 }
 
 func TestSetupRouter(t *testing.T) {

@@ -2,25 +2,23 @@ package usecase
 
 import (
 	"fmt"
+	"project/internal/dto"
 	"project/internal/errors"
+	"project/internal/repository"
 	"strings"
 )
 
-type ProductInputDTO struct {
-	ID string `json:"id"`
-}
-
 type GetProductUseCase struct {
-	ProductRepository ProductRepositoryInterface
+	ProductRepository repository.ProductRepositoryInterface
 }
 
-func NewGetProductUseCase(productRepo ProductRepositoryInterface) *GetProductUseCase {
+func NewGetProductUseCase(productRepo repository.ProductRepositoryInterface) *GetProductUseCase {
 	return &GetProductUseCase{
 		ProductRepository: productRepo,
 	}
 }
 
-func (p *GetProductUseCase) Execute(input ProductInputDTO) (*ProductDTO, error) {
+func (p *GetProductUseCase) Execute(input dto.ProductInputDTO) (*dto.ProductDTO, error) {
 	if strings.TrimSpace(input.ID) == "" {
 		return nil, errors.ErrInvalidProductID
 	}
@@ -35,10 +33,10 @@ func (p *GetProductUseCase) Execute(input ProductInputDTO) (*ProductDTO, error) 
 		return nil, fmt.Errorf("failed to get product images: %w", err)
 	}
 
-	imagesDto := make([]ProductImageDTO, 0, len(images))
+	imagesDto := make([]dto.ProductImageDTO, 0, len(images))
 
 	for _, image := range images {
-		imagesDto = append(imagesDto, ProductImageDTO{
+		imagesDto = append(imagesDto, dto.ProductImageDTO{
 			ID:           image.ID,
 			ProductID:    image.ProductID,
 			ImageURL:     image.ImageURL,
@@ -46,7 +44,7 @@ func (p *GetProductUseCase) Execute(input ProductInputDTO) (*ProductDTO, error) 
 		})
 	}
 
-	return &ProductDTO{
+	return &dto.ProductDTO{
 		ID:          product.ID,
 		Title:       product.Title,
 		Description: product.Description,

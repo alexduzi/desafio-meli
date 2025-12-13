@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -9,6 +10,7 @@ import (
 
 func Test_NewProduct_Success(t *testing.T) {
 	product, err := NewProduct(
+		"MLB001",
 		"iPhone 15 Pro Max",
 		"Latest Apple smartphone with A17 Pro chip",
 		1299.99,
@@ -25,7 +27,7 @@ func Test_NewProduct_Success(t *testing.T) {
 	assert.Equal(t, "iPhone 15 Pro Max", product.Title)
 	assert.Equal(t, 1299.99, product.Price)
 	assert.Equal(t, New, product.Condition)
-	assert.True(t, strings.HasPrefix(product.ID, "PROD-"))
+	assert.True(t, strings.HasPrefix(product.ID, "MLB"))
 	assert.False(t, product.CreatedAt.IsZero())
 	assert.False(t, product.UpdatedAt.IsZero())
 }
@@ -40,9 +42,9 @@ func Test_NewProduct_AllConditions(t *testing.T) {
 		{"Refurbished product", Refurbished},
 	}
 
-	for _, tt := range tests {
+	for idx, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			product, err := NewProduct("Test", "Desc", 99.99, "USD", tt.condition, 10, "seller-001", "Seller", "Cat")
+			product, err := NewProduct(fmt.Sprintf("%s%d", "MLB00", idx), "Test", "Desc", 99.99, "USD", tt.condition, 10, "seller-001", "Seller", "Cat")
 			assert.NoError(t, err)
 			assert.Equal(t, tt.condition, product.Condition)
 		})
@@ -50,8 +52,8 @@ func Test_NewProduct_AllConditions(t *testing.T) {
 }
 
 func Test_NewProduct_UniqueIDs(t *testing.T) {
-	product1, _ := NewProduct("Product 1", "Desc", 10.0, "USD", New, 5, "seller1", "Seller", "Cat")
-	product2, _ := NewProduct("Product 2", "Desc", 20.0, "USD", New, 10, "seller2", "Seller", "Cat")
+	product1, _ := NewProduct("MLB001", "Product 1", "Desc", 10.0, "USD", New, 5, "seller1", "Seller", "Cat")
+	product2, _ := NewProduct("MLB002", "Product 2", "Desc", 20.0, "USD", New, 10, "seller2", "Seller", "Cat")
 
 	assert.NotEqual(t, product1.ID, product2.ID)
 }
@@ -75,9 +77,9 @@ func Test_NewProduct_ValidationErrors(t *testing.T) {
 		{"Empty seller ID", "Product", 99.99, "USD", New, 10, "", "seller_id is required"},
 	}
 
-	for _, tt := range tests {
+	for idx, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			product, err := NewProduct(tt.title, "Desc", tt.price, tt.currency, tt.condition, tt.stock, tt.sellerID, "Seller", "Cat")
+			product, err := NewProduct(fmt.Sprintf("%s%d", "MLB00", idx), tt.title, "Desc", tt.price, tt.currency, tt.condition, tt.stock, tt.sellerID, "Seller", "Cat")
 			assert.Error(t, err)
 			assert.Nil(t, product)
 			assert.Equal(t, tt.wantErr, err.Error())
@@ -97,9 +99,9 @@ func Test_NewProduct_EdgeCases(t *testing.T) {
 		{"Zero stock", "Out of stock", 99.99, 0},
 	}
 
-	for _, tt := range tests {
+	for idx, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			product, err := NewProduct("Product", tt.description, tt.price, "USD", New, tt.stock, "seller-001", "Seller", "Cat")
+			product, err := NewProduct(fmt.Sprintf("%s%d", "MLB00", idx), "Product", tt.description, tt.price, "USD", New, tt.stock, "seller-001", "Seller", "Cat")
 			assert.NoError(t, err)
 			assert.NotNil(t, product)
 		})
@@ -147,15 +149,6 @@ func Test_NewProductImage_MultipleOrders(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, order, image.DisplayOrder)
 	}
-}
-
-func Test_generateProductID(t *testing.T) {
-	id1 := generateProductID()
-	id2 := generateProductID()
-
-	assert.True(t, strings.HasPrefix(id1, "PROD-"))
-	assert.True(t, strings.HasPrefix(id2, "PROD-"))
-	assert.NotEqual(t, id1, id2)
 }
 
 func Test_Product_Constants(t *testing.T) {

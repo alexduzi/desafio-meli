@@ -2,17 +2,17 @@ package handler
 
 import (
 	"net/http"
-	"project/internal/usecase"
+	"project/internal/dto"
 
 	"github.com/gin-gonic/gin"
 )
 
 type ListProductUseCase interface {
-	Execute() ([]usecase.ProductDTO, error)
+	Execute() ([]dto.ProductDTO, error)
 }
 
 type GetProductUseCase interface {
-	Execute(input usecase.ProductInputDTO) (*usecase.ProductDTO, error)
+	Execute(input dto.ProductInputDTO) (*dto.ProductDTO, error)
 }
 
 type ProductHandler struct {
@@ -27,21 +27,13 @@ func NewProductHandler(listProductUseCase ListProductUseCase, getProductUseCase 
 	}
 }
 
-type ProductListResponse struct {
-	Data []usecase.ProductDTO `json:"data"`
-}
-
-type ProductResponse struct {
-	Data usecase.ProductDTO `json:"data"`
-}
-
 // ListProducts godoc
 // @Summary List all products
 // @Description Get a list of all products with thumbnails
 // @Tags products
 // @Accept json
 // @Produce json
-// @Success 200 {object} ProductListResponse
+// @Success 200 {object} dto.ProductListResponse
 // @Failure 500 {object} errors.ErrorResponse
 // @Router /api/v1/products [get]
 func (h *ProductHandler) ListProducts(c *gin.Context) {
@@ -63,7 +55,7 @@ func (h *ProductHandler) ListProducts(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path string true "Product ID" example(MLB001)
-// @Success 200 {object} ProductResponse
+// @Success 200 {object} dto.ProductResponse
 // @Failure 400 {object} errors.ErrorResponse
 // @Failure 404 {object} errors.ErrorResponse
 // @Failure 500 {object} errors.ErrorResponse
@@ -71,7 +63,7 @@ func (h *ProductHandler) ListProducts(c *gin.Context) {
 func (h *ProductHandler) GetProduct(c *gin.Context) {
 	id := c.Param("id")
 
-	result, err := h.getProductUseCase.Execute(usecase.ProductInputDTO{ID: id})
+	result, err := h.getProductUseCase.Execute(dto.ProductInputDTO{ID: id})
 	if err != nil {
 		_ = c.Error(err)
 		return

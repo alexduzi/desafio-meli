@@ -9,49 +9,57 @@ import (
 	"project/internal/errors"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestGetProductUseCase_Execute_Success(t *testing.T) {
-	mockRepo := &MockProductRepository{
-		GetProductFunc: func(id string) (*entity.Product, error) {
-			return &entity.Product{
-				ID:          "PROD-123",
-				Title:       "iPhone 15",
-				Description: "Latest iPhone",
-				Price:       999.99,
-				Currency:    "USD",
-				Condition:   "new",
-				Stock:       10,
-				SellerID:    "seller-1",
-				SellerName:  "Apple Store",
-				Category:    "Electronics",
-				CreatedAt:   time.Now(),
-				UpdatedAt:   time.Now(),
-			}, nil
-		},
-		FindImagesByProductIDFunc: func(productID string) ([]entity.ProductImage, error) {
-			return []entity.ProductImage{
-				{ID: 1, ProductID: "PROD-123", ImageURL: "http://example.com/image1.jpg", DisplayOrder: 0},
-				{ID: 2, ProductID: "PROD-123", ImageURL: "http://example.com/image2.jpg", DisplayOrder: 1},
-			}, nil
-		},
-	}
-
-	useCase := NewGetProductUseCase(mockRepo)
-	result, err := useCase.Execute(ProductInputDTO{ID: "PROD-123"})
-
-	assert.NoError(t, err)
-	assert.NotNil(t, result)
-	assert.Equal(t, "PROD-123", result.ID)
-	assert.Equal(t, "iPhone 15", result.Title)
-	assert.Equal(t, 999.99, result.Price)
-	assert.Len(t, result.Images, 2)
-	assert.Equal(t, "http://example.com/image1.jpg", result.Images[0].ImageURL)
+type GetProductUseCaseTestSuite struct {
+	suite.Suite
+	repositoryMock *MockProductRepository
 }
 
-func TestGetProductUseCase_Execute_EmptyID(t *testing.T) {
-	mockRepo := &MockProductRepository{}
-	useCase := NewGetProductUseCase(mockRepo)
+func (suite *GetProductUseCaseTestSuite) BeforeTest(suiteName, testName string) {
+	suite.repositoryMock = new(MockProductRepository)
+}
+
+func (suite *GetProductUseCaseTestSuite) TestGetProductUseCase_Execute_Success() {
+	product := &entity.Product{
+		ID:          "PROD-123",
+		Title:       "iPhone 15",
+		Description: "Latest iPhone",
+		Price:       999.99,
+		Currency:    "USD",
+		Condition:   "new",
+		Stock:       10,
+		SellerID:    "seller-1",
+		SellerName:  "Apple Store",
+		Category:    "Electronics",
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+	images := []entity.ProductImage{
+		{ID: 1, ProductID: "PROD-123", ImageURL: "http://example.com/image1.jpg", DisplayOrder: 0},
+		{ID: 2, ProductID: "PROD-123", ImageURL: "http://example.com/image2.jpg", DisplayOrder: 1},
+	}
+
+	suite.repositoryMock.On("GetProduct", mock.Anything).Return(product, nil)
+
+	suite.repositoryMock.On("FindImagesByProductID", mock.Anything).Return(images, nil)
+
+	useCase := NewGetProductUseCase(suite.repositoryMock)
+	result, err := useCase.Execute(ProductInputDTO{ID: "PROD-123"})
+
+	assert.NoError(suite.T(), err)
+	assert.NotNil(suite.T(), result)
+	assert.Equal(suite.T(), "PROD-123", result.ID)
+	assert.Equal(suite.T(), "iPhone 15", result.Title)
+	assert.Equal(suite.T(), 999.99, result.Price)
+	assert.Len(suite.T(), result.Images, 2)
+	assert.Equal(suite.T(), "http://example.com/image1.jpg", result.Images[0].ImageURL)
+}
+
+func (suite *GetProductUseCaseTestSuite) TestGetProductUseCase_Execute_EmptyID() {
+	useCase := NewGetProductUseCase(suite.repositoryMock)
 
 	tests := []struct {
 		name string
@@ -63,7 +71,7 @@ func TestGetProductUseCase_Execute_EmptyID(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		suite.T().Run(tt.name, func(t *testing.T) {
 			result, err := useCase.Execute(ProductInputDTO{ID: tt.id})
 
 			assert.Error(t, err)
@@ -73,85 +81,77 @@ func TestGetProductUseCase_Execute_EmptyID(t *testing.T) {
 	}
 }
 
-func TestGetProductUseCase_Execute_ProductNotFound(t *testing.T) {
-	mockRepo := &MockProductRepository{
-		GetProductFunc: func(id string) (*entity.Product, error) {
-			return nil, errors.ErrProductNotFound
-		},
-	}
+func (suite *GetProductUseCaseTestSuite) TestGetProductUseCase_Execute_ProductNotFound() {
+	suite.repositoryMock.On("GetProduct", mock.Anything).Return(nil, errors.ErrProductNotFound)
 
-	useCase := NewGetProductUseCase(mockRepo)
+	useCase := NewGetProductUseCase(suite.repositoryMock)
 	result, err := useCase.Execute(ProductInputDTO{ID: "PROD-999"})
 
-	assert.Error(t, err)
-	assert.Nil(t, result)
-	assert.ErrorIs(t, err, errors.ErrProductNotFound)
+	assert.Error(suite.T(), err)
+	assert.Nil(suite.T(), result)
+	assert.ErrorIs(suite.T(), err, errors.ErrProductNotFound)
 }
 
-func TestGetProductUseCase_Execute_DatabaseError(t *testing.T) {
-	mockRepo := &MockProductRepository{
-		GetProductFunc: func(id string) (*entity.Product, error) {
-			return nil, fmt.Errorf("%w: connection failed", errors.ErrDatabaseError)
-		},
-	}
+func (suite *GetProductUseCaseTestSuite) TestGetProductUseCase_Execute_DatabaseError() {
+	suite.repositoryMock.On("GetProduct", mock.Anything).Return(nil, fmt.Errorf("%w: connection failed", errors.ErrDatabaseError))
 
-	useCase := NewGetProductUseCase(mockRepo)
+	useCase := NewGetProductUseCase(suite.repositoryMock)
 	result, err := useCase.Execute(ProductInputDTO{ID: "PROD-123"})
 
-	assert.Error(t, err)
-	assert.Nil(t, result)
-	assert.ErrorIs(t, err, errors.ErrDatabaseError)
+	assert.Error(suite.T(), err)
+	assert.Nil(suite.T(), result)
+	assert.ErrorIs(suite.T(), err, errors.ErrDatabaseError)
 }
 
-func TestGetProductUseCase_Execute_ImagesError(t *testing.T) {
-	mockRepo := &MockProductRepository{
-		GetProductFunc: func(id string) (*entity.Product, error) {
-			return &entity.Product{
-				ID:    "PROD-123",
-				Title: "Test Product",
-			}, nil
-		},
-		FindImagesByProductIDFunc: func(productID string) ([]entity.ProductImage, error) {
-			return nil, fmt.Errorf("%w: failed to fetch images", errors.ErrDatabaseError)
-		},
+func (suite *GetProductUseCaseTestSuite) TestGetProductUseCase_Execute_ImagesError() {
+	product := &entity.Product{
+		ID:    "PROD-123",
+		Title: "Test Product",
 	}
 
-	useCase := NewGetProductUseCase(mockRepo)
+	suite.repositoryMock.On("GetProduct", mock.Anything).Return(product, nil)
+
+	suite.repositoryMock.On("FindImagesByProductID", mock.Anything).Return(nil, fmt.Errorf("%w: failed to fetch images", errors.ErrDatabaseError))
+
+	useCase := NewGetProductUseCase(suite.repositoryMock)
 	result, err := useCase.Execute(ProductInputDTO{ID: "PROD-123"})
 
-	assert.Error(t, err)
-	assert.Nil(t, result)
-	assert.ErrorIs(t, err, errors.ErrDatabaseError)
+	assert.Error(suite.T(), err)
+	assert.Nil(suite.T(), result)
+	assert.ErrorIs(suite.T(), err, errors.ErrDatabaseError)
 }
 
-func TestGetProductUseCase_Execute_NoImages(t *testing.T) {
-	mockRepo := &MockProductRepository{
-		GetProductFunc: func(id string) (*entity.Product, error) {
-			return &entity.Product{
-				ID:          "PROD-123",
-				Title:       "Product Without Images",
-				Description: "Test",
-				Price:       50.0,
-				Currency:    "USD",
-				Condition:   "new",
-				Stock:       5,
-				SellerID:    "seller-1",
-				SellerName:  "Store",
-				Category:    "Test",
-				CreatedAt:   time.Now(),
-				UpdatedAt:   time.Now(),
-			}, nil
-		},
-		FindImagesByProductIDFunc: func(productID string) ([]entity.ProductImage, error) {
-			return []entity.ProductImage{}, nil
-		},
+func (suite *GetProductUseCaseTestSuite) TestGetProductUseCase_Execute_NoImages() {
+	product := &entity.Product{
+		ID:          "PROD-123",
+		Title:       "Product Without Images",
+		Description: "Test",
+		Price:       50.0,
+		Currency:    "USD",
+		Condition:   "new",
+		Stock:       5,
+		SellerID:    "seller-1",
+		SellerName:  "Store",
+		Category:    "Test",
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}
 
-	useCase := NewGetProductUseCase(mockRepo)
+	images := []entity.ProductImage{}
+
+	suite.repositoryMock.On("GetProduct", mock.Anything).Return(product, nil)
+
+	suite.repositoryMock.On("FindImagesByProductID", mock.Anything).Return(images, nil)
+
+	useCase := NewGetProductUseCase(suite.repositoryMock)
 	result, err := useCase.Execute(ProductInputDTO{ID: "PROD-123"})
 
-	assert.NoError(t, err)
-	assert.NotNil(t, result)
-	assert.Equal(t, "PROD-123", result.ID)
-	assert.Empty(t, result.Images)
+	assert.NoError(suite.T(), err)
+	assert.NotNil(suite.T(), result)
+	assert.Equal(suite.T(), "PROD-123", result.ID)
+	assert.Empty(suite.T(), result.Images)
+}
+
+func TestGetProductUseCaseTestSuite(t *testing.T) {
+	suite.Run(t, new(GetProductUseCaseTestSuite))
 }

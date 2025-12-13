@@ -2,31 +2,34 @@ package usecase
 
 import (
 	"project/internal/entity"
+
+	"github.com/stretchr/testify/mock"
 )
 
 type MockProductRepository struct {
-	ListProductsFunc            func() ([]entity.Product, error)
-	GetProductFunc              func(id string) (*entity.Product, error)
-	FindImagesByProductIDFunc   func(productID string) ([]entity.ProductImage, error)
+	mock.Mock
 }
 
 func (m *MockProductRepository) ListProducts() ([]entity.Product, error) {
-	if m.ListProductsFunc != nil {
-		return m.ListProductsFunc()
+	args := m.Called()
+	if args.Error(1) != nil {
+		return nil, args.Error(1)
 	}
-	return []entity.Product{}, nil
+	return args.Get(0).([]entity.Product), nil
 }
 
 func (m *MockProductRepository) GetProduct(id string) (*entity.Product, error) {
-	if m.GetProductFunc != nil {
-		return m.GetProductFunc(id)
+	args := m.Called(id)
+	if args.Error(1) != nil {
+		return nil, args.Error(1)
 	}
-	return nil, nil
+	return args.Get(0).(*entity.Product), nil
 }
 
 func (m *MockProductRepository) FindImagesByProductID(productID string) ([]entity.ProductImage, error) {
-	if m.FindImagesByProductIDFunc != nil {
-		return m.FindImagesByProductIDFunc(productID)
+	args := m.Called(productID)
+	if args.Error(1) != nil {
+		return nil, args.Error(1)
 	}
-	return []entity.ProductImage{}, nil
+	return args.Get(0).([]entity.ProductImage), nil
 }

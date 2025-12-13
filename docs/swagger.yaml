@@ -1,12 +1,103 @@
-basePath: /api/v1
+basePath: /
 definitions:
+  errors.ErrorResponse:
+    properties:
+      code:
+        example: PRODUCT_NOT_FOUND
+        type: string
+      error:
+        example: product not found
+        type: string
+      message:
+        example: The requested product does not exist
+        type: string
+      timestamp:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+    type: object
   handler.HealthResponse:
     properties:
       service:
+        example: product-api
         type: string
       status:
+        example: healthy
         type: string
       timestamp:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+    type: object
+  handler.ProductListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/usecase.ProductDTO'
+        type: array
+    type: object
+  handler.ProductResponse:
+    properties:
+      data:
+        $ref: '#/definitions/usecase.ProductDTO'
+    type: object
+  usecase.ProductDTO:
+    properties:
+      category:
+        example: Electronics > Smartphones
+        type: string
+      condition:
+        example: new
+        type: string
+      created_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      currency:
+        example: USD
+        type: string
+      description:
+        example: Latest Apple flagship smartphone with A17 Pro chip
+        type: string
+      id:
+        example: MLB001
+        type: string
+      images:
+        items:
+          $ref: '#/definitions/usecase.ProductImageDTO'
+        type: array
+      price:
+        example: 1299.99
+        type: number
+      seller_id:
+        example: SELLER001
+        type: string
+      seller_name:
+        example: TechWorld Store
+        type: string
+      stock:
+        example: 45
+        type: integer
+      thumbnail:
+        example: https://images.unsplash.com/photo-1696446702230-a8ff49103cd1?w=800
+        type: string
+      title:
+        example: iPhone 15 Pro Max 256GB - Titanium Blue
+        type: string
+      updated_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+    type: object
+  usecase.ProductImageDTO:
+    properties:
+      display_order:
+        example: 0
+        type: integer
+      id:
+        example: 1
+        type: integer
+      image_url:
+        example: https://images.unsplash.com/photo-1696446702230-a8ff49103cd1?w=800
+        type: string
+      product_id:
+        example: MLB001
         type: string
     type: object
 host: localhost:8080
@@ -14,7 +105,7 @@ info:
   contact:
     email: duzihd@gmail.com
     name: Alex Duzi
-  description: API for managing products
+  description: API for fetching product item
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
@@ -22,6 +113,59 @@ info:
   title: Product API
   version: "1.0"
 paths:
+  /api/v1/products:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all products with thumbnails
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.ProductListResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: List all products
+      tags:
+      - products
+  /api/v1/products/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get product details by product ID including all images
+      parameters:
+      - description: Product ID
+        example: MLB001
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.ProductResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: Get a product by ID
+      tags:
+      - products
   /health:
     get:
       description: Returns the health status of the API
@@ -35,68 +179,6 @@ paths:
       summary: Health check endpoint
       tags:
       - health
-  /products:
-    get:
-      consumes:
-      - application/json
-      description: Get a list of all products
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 'data: array of products'
-          schema:
-            additionalProperties: true
-            type: object
-        "500":
-          description: 'error: error message'
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: List all products
-      tags:
-      - products
-  /products/{id}:
-    get:
-      consumes:
-      - application/json
-      description: Get product details by product ID
-      parameters:
-      - description: Product ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 'data: product object'
-          schema:
-            additionalProperties: true
-            type: object
-        "400":
-          description: 'error: validation error'
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: 'error: product not found'
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: 'error: error message'
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Get a product by ID
-      tags:
-      - products
 schemes:
 - http
 - https

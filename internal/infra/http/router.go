@@ -14,7 +14,6 @@ func SetupRouter(
 ) *gin.Engine {
 	r := gin.Default()
 
-	// Add centralized error handling middleware
 	r.Use(ErrorHandlerMiddleware())
 
 	r.GET("/health", healthHandler.HealthCheck)

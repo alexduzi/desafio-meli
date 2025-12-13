@@ -21,7 +21,6 @@ func NewGetProductUseCase(productRepo ProductRepositoryInterface) *GetProductUse
 }
 
 func (p *GetProductUseCase) Execute(input ProductInputDTO) (*ProductDTO, error) {
-	// Validate input
 	if strings.TrimSpace(input.ID) == "" {
 		return nil, errors.ErrInvalidProductID
 	}

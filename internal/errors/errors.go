@@ -42,10 +42,10 @@ func NewAppError(err error, message string, statusCode int, code string) *AppErr
 }
 
 type ErrorResponse struct {
-	Error     string    `json:"error"`
-	Message   string    `json:"message,omitempty"`
-	Code      string    `json:"code,omitempty"`
-	Timestamp time.Time `json:"timestamp"`
+	Error     string    `json:"error" example:"product not found"`
+	Message   string    `json:"message,omitempty" example:"The requested product does not exist"`
+	Code      string    `json:"code,omitempty" example:"PRODUCT_NOT_FOUND"`
+	Timestamp time.Time `json:"timestamp" example:"2024-01-01T00:00:00Z"`
 }
 
 func GetStatusCode(err error) int {

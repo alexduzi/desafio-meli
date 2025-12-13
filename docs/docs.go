@@ -23,6 +23,86 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/v1/products": {
+            "get": {
+                "description": "Get a list of all products with thumbnails",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "List all products",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ProductListResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/products/{id}": {
+            "get": {
+                "description": "Get product details by product ID including all images",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Get a product by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "MLB001",
+                        "description": "Product ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ProductResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "description": "Returns the health status of the API",
@@ -42,113 +122,147 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/products": {
-            "get": {
-                "description": "Get a list of all products",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "products"
-                ],
-                "summary": "List all products",
-                "responses": {
-                    "200": {
-                        "description": "data: array of products",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "500": {
-                        "description": "error: error message",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/products/{id}": {
-            "get": {
-                "description": "Get product details by product ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "products"
-                ],
-                "summary": "Get a product by ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Product ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "data: product object",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "400": {
-                        "description": "error: validation error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "error: product not found",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "error: error message",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
+        "errors.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "PRODUCT_NOT_FOUND"
+                },
+                "error": {
+                    "type": "string",
+                    "example": "product not found"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "The requested product does not exist"
+                },
+                "timestamp": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                }
+            }
+        },
         "handler.HealthResponse": {
             "type": "object",
             "properties": {
                 "service": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "product-api"
                 },
                 "status": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "healthy"
                 },
                 "timestamp": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                }
+            }
+        },
+        "handler.ProductListResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/usecase.ProductDTO"
+                    }
+                }
+            }
+        },
+        "handler.ProductResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/usecase.ProductDTO"
+                }
+            }
+        },
+        "usecase.ProductDTO": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string",
+                    "example": "Electronics \u003e Smartphones"
+                },
+                "condition": {
+                    "type": "string",
+                    "example": "new"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "currency": {
+                    "type": "string",
+                    "example": "USD"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Latest Apple flagship smartphone with A17 Pro chip"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "MLB001"
+                },
+                "images": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/usecase.ProductImageDTO"
+                    }
+                },
+                "price": {
+                    "type": "number",
+                    "example": 1299.99
+                },
+                "seller_id": {
+                    "type": "string",
+                    "example": "SELLER001"
+                },
+                "seller_name": {
+                    "type": "string",
+                    "example": "TechWorld Store"
+                },
+                "stock": {
+                    "type": "integer",
+                    "example": 45
+                },
+                "thumbnail": {
+                    "type": "string",
+                    "example": "https://images.unsplash.com/photo-1696446702230-a8ff49103cd1?w=800"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "iPhone 15 Pro Max 256GB - Titanium Blue"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                }
+            }
+        },
+        "usecase.ProductImageDTO": {
+            "type": "object",
+            "properties": {
+                "display_order": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "image_url": {
+                    "type": "string",
+                    "example": "https://images.unsplash.com/photo-1696446702230-a8ff49103cd1?w=800"
+                },
+                "product_id": {
+                    "type": "string",
+                    "example": "MLB001"
                 }
             }
         }
@@ -159,10 +273,10 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "localhost:8080",
-	BasePath:         "/api/v1",
+	BasePath:         "/",
 	Schemes:          []string{"http", "https"},
 	Title:            "Product API",
-	Description:      "API for managing products",
+	Description:      "API for fetching product item",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

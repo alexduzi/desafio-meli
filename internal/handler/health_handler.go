@@ -14,9 +14,9 @@ func NewHealthHandler() *HealthHandler {
 }
 
 type HealthResponse struct {
-	Status    string    `json:"status"`
-	Timestamp time.Time `json:"timestamp"`
-	Service   string    `json:"service"`
+	Status    string    `json:"status" example:"healthy"`
+	Timestamp time.Time `json:"timestamp" example:"2024-01-01T00:00:00Z"`
+	Service   string    `json:"service" example:"product-api"`
 }
 
 // HealthCheck godoc

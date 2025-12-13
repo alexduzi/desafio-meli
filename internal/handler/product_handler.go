@@ -27,15 +27,23 @@ func NewProductHandler(listProductUseCase ListProductUseCase, getProductUseCase 
 	}
 }
 
+type ProductListResponse struct {
+	Data []usecase.ProductDTO `json:"data"`
+}
+
+type ProductResponse struct {
+	Data usecase.ProductDTO `json:"data"`
+}
+
 // ListProducts godoc
 // @Summary List all products
-// @Description Get a list of all products
+// @Description Get a list of all products with thumbnails
 // @Tags products
 // @Accept json
 // @Produce json
-// @Success 200 {object} map[string]interface{} "data: array of products"
-// @Failure 500 {object} map[string]string "error: error message"
-// @Router /products [get]
+// @Success 200 {object} ProductListResponse
+// @Failure 500 {object} errors.ErrorResponse
+// @Router /api/v1/products [get]
 func (h *ProductHandler) ListProducts(c *gin.Context) {
 	result, err := h.listProductUseCase.Execute()
 	if err != nil {
@@ -50,16 +58,16 @@ func (h *ProductHandler) ListProducts(c *gin.Context) {
 
 // GetProduct godoc
 // @Summary Get a product by ID
-// @Description Get product details by product ID
+// @Description Get product details by product ID including all images
 // @Tags products
 // @Accept json
 // @Produce json
-// @Param id path string true "Product ID"
-// @Success 200 {object} map[string]interface{} "data: product object"
-// @Failure 400 {object} map[string]string "error: validation error"
-// @Failure 404 {object} map[string]string "error: product not found"
-// @Failure 500 {object} map[string]string "error: error message"
-// @Router /products/{id} [get]
+// @Param id path string true "Product ID" example(MLB001)
+// @Success 200 {object} ProductResponse
+// @Failure 400 {object} errors.ErrorResponse
+// @Failure 404 {object} errors.ErrorResponse
+// @Failure 500 {object} errors.ErrorResponse
+// @Router /api/v1/products/{id} [get]
 func (h *ProductHandler) GetProduct(c *gin.Context) {
 	id := c.Param("id")
 

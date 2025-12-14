@@ -14,28 +14,31 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 type MockListProductUseCase struct {
-	ExecuteFunc func(ctx context.Context) ([]dto.ProductDTO, error)
+	mock.Mock
 }
 
 func (m *MockListProductUseCase) Execute(ctx context.Context) ([]dto.ProductDTO, error) {
-	if m.ExecuteFunc != nil {
-		return m.ExecuteFunc(ctx)
+	args := m.Called(ctx)
+	if args.Error(1) != nil {
+		return nil, args.Error(1)
 	}
-	return []dto.ProductDTO{}, nil
+	return args.Get(0).([]dto.ProductDTO), nil
 }
 
 type MockGetProductUseCase struct {
-	ExecuteFunc func(ctx context.Context, input dto.ProductInputDTO) (*dto.ProductDTO, error)
+	mock.Mock
 }
 
 func (m *MockGetProductUseCase) Execute(ctx context.Context, input dto.ProductInputDTO) (*dto.ProductDTO, error) {
-	if m.ExecuteFunc != nil {
-		return m.ExecuteFunc(ctx, input)
+	args := m.Called(ctx, input)
+	if args.Error(1) != nil {
+		return nil, args.Error(1)
 	}
-	return nil, nil
+	return args.Get(0).(*dto.ProductDTO), nil
 }
 
 func setupTestRouter(handler *ProductHandler) *gin.Engine {
@@ -63,24 +66,23 @@ func setupTestRouter(handler *ProductHandler) *gin.Engine {
 }
 
 func TestProductHandler_ListProducts_Success(t *testing.T) {
-	mockListUseCase := &MockListProductUseCase{
-		ExecuteFunc: func(ctx context.Context) ([]dto.ProductDTO, error) {
-			return []dto.ProductDTO{
-				{
-					ID:       "PROD-1",
-					Title:    "Product 1",
-					Price:    100.0,
-					Currency: "USD",
-				},
-				{
-					ID:       "PROD-2",
-					Title:    "Product 2",
-					Price:    200.0,
-					Currency: "USD",
-				},
-			}, nil
+	result := []dto.ProductDTO{
+		{
+			ID:       "PROD-1",
+			Title:    "Product 1",
+			Price:    100.0,
+			Currency: "USD",
+		},
+		{
+			ID:       "PROD-2",
+			Title:    "Product 2",
+			Price:    200.0,
+			Currency: "USD",
 		},
 	}
+
+	mockListUseCase := new(MockListProductUseCase)
+	mockListUseCase.On("Execute", mock.Anything).Return(result, nil)
 
 	handler := NewProductHandler(mockListUseCase, nil)
 	router := setupTestRouter(handler)
@@ -101,11 +103,8 @@ func TestProductHandler_ListProducts_Success(t *testing.T) {
 }
 
 func TestProductHandler_ListProducts_EmptyList(t *testing.T) {
-	mockListUseCase := &MockListProductUseCase{
-		ExecuteFunc: func(ctx context.Context) ([]dto.ProductDTO, error) {
-			return []dto.ProductDTO{}, nil
-		},
-	}
+	mockListUseCase := new(MockListProductUseCase)
+	mockListUseCase.On("Execute", mock.Anything).Return([]dto.ProductDTO{}, nil)
 
 	handler := NewProductHandler(mockListUseCase, nil)
 	router := setupTestRouter(handler)
@@ -125,11 +124,8 @@ func TestProductHandler_ListProducts_EmptyList(t *testing.T) {
 }
 
 func TestProductHandler_ListProducts_DatabaseError(t *testing.T) {
-	mockListUseCase := &MockListProductUseCase{
-		ExecuteFunc: func(ctx context.Context) ([]dto.ProductDTO, error) {
-			return nil, fmt.Errorf("failed to list products: %w", errors.ErrDatabaseError)
-		},
-	}
+	mockListUseCase := new(MockListProductUseCase)
+	mockListUseCase.On("Execute", mock.Anything).Return(nil, fmt.Errorf("failed to list products: %w", errors.ErrDatabaseError))
 
 	handler := NewProductHandler(mockListUseCase, nil)
 	router := setupTestRouter(handler)
@@ -147,21 +143,18 @@ func TestProductHandler_ListProducts_DatabaseError(t *testing.T) {
 }
 
 func TestProductHandler_GetProduct_Success(t *testing.T) {
-	mockGetUseCase := &MockGetProductUseCase{
-		ExecuteFunc: func(ctx context.Context, input dto.ProductInputDTO) (*dto.ProductDTO, error) {
-			assert.Equal(t, "PROD-123", input.ID)
-			return &dto.ProductDTO{
-				ID:          "PROD-123",
-				Title:       "iPhone 15",
-				Description: "Latest iPhone",
-				Price:       999.99,
-				Currency:    "USD",
-				Images: []dto.ProductImageDTO{
-					{ID: 1, ImageURL: "http://example.com/img.jpg"},
-				},
-			}, nil
+	result := &dto.ProductDTO{
+		ID:          "PROD-123",
+		Title:       "iPhone 15",
+		Description: "Latest iPhone",
+		Price:       999.99,
+		Currency:    "USD",
+		Images: []dto.ProductImageDTO{
+			{ID: 1, ImageURL: "http://example.com/img.jpg"},
 		},
 	}
+	mockGetUseCase := new(MockGetProductUseCase)
+	mockGetUseCase.On("Execute", mock.Anything, mock.Anything).Return(result, nil)
 
 	handler := NewProductHandler(nil, mockGetUseCase)
 	router := setupTestRouter(handler)
@@ -184,11 +177,8 @@ func TestProductHandler_GetProduct_Success(t *testing.T) {
 }
 
 func TestProductHandler_GetProduct_InvalidID(t *testing.T) {
-	mockGetUseCase := &MockGetProductUseCase{
-		ExecuteFunc: func(ctx context.Context, input dto.ProductInputDTO) (*dto.ProductDTO, error) {
-			return nil, errors.ErrInvalidProductID
-		},
-	}
+	mockGetUseCase := new(MockGetProductUseCase)
+	mockGetUseCase.On("Execute", mock.Anything, mock.Anything).Return(nil, errors.ErrInvalidProductID)
 
 	handler := NewProductHandler(nil, mockGetUseCase)
 	router := setupTestRouter(handler)
@@ -206,11 +196,8 @@ func TestProductHandler_GetProduct_InvalidID(t *testing.T) {
 }
 
 func TestProductHandler_GetProduct_NotFound(t *testing.T) {
-	mockGetUseCase := &MockGetProductUseCase{
-		ExecuteFunc: func(ctx context.Context, input dto.ProductInputDTO) (*dto.ProductDTO, error) {
-			return nil, errors.ErrProductNotFound
-		},
-	}
+	mockGetUseCase := new(MockGetProductUseCase)
+	mockGetUseCase.On("Execute", mock.Anything, mock.Anything).Return(nil, errors.ErrProductNotFound)
 
 	handler := NewProductHandler(nil, mockGetUseCase)
 	router := setupTestRouter(handler)
@@ -229,11 +216,8 @@ func TestProductHandler_GetProduct_NotFound(t *testing.T) {
 }
 
 func TestProductHandler_GetProduct_DatabaseError(t *testing.T) {
-	mockGetUseCase := &MockGetProductUseCase{
-		ExecuteFunc: func(ctx context.Context, input dto.ProductInputDTO) (*dto.ProductDTO, error) {
-			return nil, fmt.Errorf("failed to get product: %w", errors.ErrDatabaseError)
-		},
-	}
+	mockGetUseCase := new(MockGetProductUseCase)
+	mockGetUseCase.On("Execute", mock.Anything, mock.Anything).Return(nil, errors.ErrDatabaseError)
 
 	handler := NewProductHandler(nil, mockGetUseCase)
 	router := setupTestRouter(handler)

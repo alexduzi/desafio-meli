@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -11,6 +10,7 @@ import (
 	"project/internal/handler"
 	"project/internal/infra/database"
 	httpInfra "project/internal/infra/http"
+	"project/internal/infra/logger"
 	"project/internal/usecase"
 	"syscall"
 	"time"
@@ -18,6 +18,7 @@ import (
 	_ "project/docs"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
 )
 
 // @title Product API
@@ -37,16 +38,25 @@ import (
 func main() {
 	cfg := config.Load()
 
+	logger.InitLogger(cfg.AppEnv)
+
+	log.Info().
+		Str("environment", cfg.AppEnv).
+		Str("gin_mode", cfg.GinMode).
+		Str("port", cfg.AppPort).
+		Msg("Starting application")
+
 	gin.SetMode(cfg.GinMode)
 
 	db, err := database.InitDB()
 	if err != nil {
-		log.Fatal("Failed to initialize database:", err)
+		log.Fatal().Err(err).Msg("Failed to initialize database")
 	}
 	defer db.Close()
 
-	productRepo := database.NewProductRepository(db)
+	log.Info().Msg("Database initialized successfully")
 
+	productRepo := database.NewProductRepository(db)
 	listProductUseCase := usecase.NewListProductUseCase(productRepo)
 	getProductUseCase := usecase.NewGetProductUseCase(productRepo)
 
@@ -63,23 +73,28 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("starting server on %s (mode: %s, env: %s)\n", serverAddr, cfg.GinMode, cfg.AppEnv)
-		if err := srv.ListenAndServe(); err != nil {
-			log.Fatalf("listen: %s\n", err)
+		log.Info().
+			Str("address", serverAddr).
+			Str("environment", cfg.AppEnv).
+			Msg("Server starting")
+
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal().Err(err).Msg("Server failed to start")
 		}
 	}()
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 	<-stop
-	log.Println("shutting down server...")
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	log.Info().Msg("Shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	fmt.Println("shutting down server...")
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatalf("server forced to shutdown: %v\n", err)
+		log.Error().Err(err).Msg("Server forced to shutdown")
+	} else {
+		log.Info().Msg("Server gracefully stopped")
 	}
-	fmt.Println("server exiting")
 }

@@ -1,6 +1,6 @@
 # API de Produtos - Desafio Técnico
 
-![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)
+![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8?style=flat&logo=go)
 ![Test Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)
 ![Docker](https://img.shields.io/badge/Docker-Supported-2496ED?style=flat&logo=docker)
 ![Inspired by](https://img.shields.io/badge/Inspired%20by-MercadoLibre-yellow)
@@ -14,6 +14,7 @@ API RESTful para listagem de produto desenvolvida em Go com Clean Architecture.
 - [Sobre o Projeto](#sobre-o-projeto)
 - [Arquitetura](#arquitetura)
 - [Endpoints da API](#endpoints-da-api)
+- [Observabilidade](#observabilidade)
 - [Pré-requisitos](#pré-requisitos)
 - [Instalação](#instalação)
 - [Como Usar](#como-usar)
@@ -36,6 +37,8 @@ Esta API foi desenvolvida como parte de um desafio técnico e implementa um sist
 - ✅ **Otimização de Performance** - Prevenção do problema N+1 com thumbnails
 - ✅ **Docker Support** - Multi-stage build otimizado com health checks
 - ✅ **Production Ready** - Container seguro com usuário non-root
+- ✅ **Structured Logging** - Logs estruturados com zerolog
+- ✅ **Request Tracing** - Rastreamento de requisições com Request ID único
 
 ---
 
@@ -71,10 +74,14 @@ Caso tenha problemas para visualizar o arquivo [Diagrama arquitetural mermaid](d
 ## Tecnologias Utilizadas
 
 ### Core
-- **Go 1.21+** - Linguagem de programação
+- **Go 1.24** - Linguagem de programação (versão mais recente)
 - **Gin** - Framework web HTTP router
 - **SQLite** - Banco de dados em memória
 - **sqlx** - Extensions para database/sql
+
+### Observabilidade
+- **zerolog** - Structured logging em JSON
+- **uuid** - Geração de Request IDs únicos
 
 ### Testes
 - **testify** - Assertions e mocks para testes
@@ -92,7 +99,7 @@ Caso tenha problemas para visualizar o arquivo [Diagrama arquitetural mermaid](d
 
 ## Pré-requisitos
 
-- **Go 1.21 ou superior** - [Instalar Go](https://golang.org/doc/install)
+- **Go 1.24 ou superior** - [Instalar Go](https://golang.org/doc/install)
 - **Make** (opcional, mas recomendado) - Geralmente já vem instalado em Linux/macOS
 - **Docker** (opcional) - [Instalar Docker](https://docs.docker.com/get-docker/)
 - **Git** - Para clonar o repositório
@@ -172,9 +179,6 @@ make test-coverage-html
 
 # Limpar arquivos gerados
 make clean
-
-# executa golangci-lint run ./...
-make lint
 
 # Executar tudo (setup, swagger, build, test)
 make all
@@ -263,8 +267,77 @@ curl http://localhost:8080/api/v1/products
 # Obter produto específico (endpoint principal)
 curl http://localhost:8080/api/v1/products/MLB001
 
+# Com Request ID customizado
+curl -H "X-Request-ID: meu-id-123" http://localhost:8080/api/v1/products
+
 # Com formatação JSON (requer jq)
 curl http://localhost:8080/api/v1/products | jq
+```
+
+---
+
+## Observabilidade
+
+Este projeto implementa **observabilidade production-ready** com logging estruturado e rastreamento de requisições.
+
+### 🔍 Features
+
+- ✅ **Request ID único** - Rastreamento end-to-end de cada requisição
+- ✅ **Logs estruturados** - JSON para produção, colorido para desenvolvimento
+- ✅ **Correlação de logs** - Mesmo request_id em todos os logs da requisição
+- ✅ **Performance tracking** - Duração de cada request
+- ✅ **Níveis apropriados** - DEBUG, INFO, WARN, ERROR
+
+### Request ID
+
+Cada requisição recebe automaticamente um ID único:
+
+```bash
+# Request automático gera UUID
+curl -v http://localhost:8080/api/v1/products
+# Response header: X-Request-ID: f47ac10b-58cc-4372-a567-0e02b2c3d479
+
+# Request customizado (útil para correlação de sistemas)
+curl -H "X-Request-ID: meu-id" http://localhost:8080/api/v1/products
+# Response header: X-Request-ID: meu-id
+```
+
+### Logs Estruturados
+
+**Development** (colorido e legível):
+```
+12:00:01 INF Request completed successfully method=GET path=/api/v1/products request_id=abc-123 status=200 duration_ms=45
+```
+
+**Production** (JSON para parsing):
+```json
+{
+  "level": "info",
+  "time": "2024-01-01T12:00:01Z",
+  "request_id": "abc-123",
+  "method": "GET",
+  "path": "/api/v1/products",
+  "status": 200,
+  "duration_ms": 45,
+  "client_ip": "127.0.0.1",
+  "message": "Request completed successfully"
+}
+```
+
+### Rastreamento de Requisições
+
+Use o Request ID para rastrear toda a jornada de uma requisição:
+
+```bash
+# Buscar todos os logs de uma requisição
+grep "abc-123" application.log
+```
+
+Output:
+```
+{"level":"debug","request_id":"abc-123","message":"Executing GetProduct use case"}
+{"level":"debug","request_id":"abc-123","message":"Product found successfully"}
+{"level":"info","request_id":"abc-123","message":"Request completed successfully"}
 ```
 
 ---
@@ -308,6 +381,8 @@ internal/
 │   └── health_handler_test.go   # Testes do health check
 └── infra/http/
     ├── error_middleware_test.go # Testes do middleware de erros
+    ├── middleware/
+    │   └── request_id_test.go   # Testes do Request ID
     └── router_test.go           # Testes de rotas
 
 test/integration/
@@ -517,6 +592,24 @@ func (h *Handler) GetProduct(c *gin.Context) {
 }
 ```
 
+---
+
+### 5. Structured Logging e Request ID
+
+**Decisão**: Implementar logging estruturado com zerolog e rastreamento via Request ID.
+
+**Justificativa**:
+- **Produção**: Logs em JSON podem ser facilmente ingeridos por ELK, CloudWatch, DataDog
+- **Debugging**: Request ID permite rastrear requisição completa através de múltiplos serviços
+- **Performance**: Zerolog é extremamente rápido e tem baixo overhead
+- **Observabilidade**: Facilita troubleshooting e análise de problemas
+
+**Benefícios**:
+- Logs estruturados prontos para ferramentas de análise
+- Rastreamento de requisições end-to-end
+- Correlação de logs com mesmo request_id
+- Métricas de performance (duration tracking)
+
 ## Estrutura do Projeto
 
 ```
@@ -556,6 +649,9 @@ func (h *Handler) GetProduct(c *gin.Context) {
 │   │   └── errors_test.go               # Testes de error handling
 │   │
 │   └── infra/                           # Infraestrutura (detalhes técnicos)
+│       ├── logger/                      # Logging estruturado
+│       │   └── logger.go                # Configuração do zerolog
+│       │
 │       ├── database/                    # Implementação do repositório
 │       │   ├── db.go                    # Inicialização do banco SQLite
 │       │   ├── product_repository_impl.go # Implementação da interface
@@ -565,6 +661,10 @@ func (h *Handler) GetProduct(c *gin.Context) {
 │       │       └── migrations.go        # Embed dos arquivos SQL
 │       │
 │       └── http/                        # Configuração HTTP
+│           ├── middleware/              # Middlewares HTTP
+│           │   ├── request_id.go        # Request ID middleware
+│           │   ├── request_id_test.go   # Testes
+│           │   └── logging.go           # Logging middleware
 │           ├── router.go                # Setup de rotas e middlewares
 │           ├── router_test.go           # Testes de rotas
 │           ├── error_middleware.go      # Middleware de tratamento de erros
@@ -591,6 +691,7 @@ func (h *Handler) GetProduct(c *gin.Context) {
 ├── Makefile                             # Automação de tarefas (run, test, docker, etc)
 ├── go.mod                               # Dependências do projeto
 ├── go.sum                               # Checksums das dependências
+├── LOGGING.md                           # Documentação de observabilidade
 └── README.md                            # Este arquivo
 ```
 
@@ -619,6 +720,7 @@ func (h *Handler) GetProduct(c *gin.Context) {
 ┌─────────────────────────────────▼───────────────────────────┐
 │  Camada de Infraestrutura (Detalhes Técnicos)               │
 │  • infra/database/ - Implementação SQLite                   │
+│  • infra/logger/   - Logging estruturado                    │
 │  • config/         - Configurações e variáveis de ambiente  │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -659,6 +761,7 @@ func (h *Handler) GetProduct(c *gin.Context) {
 - **[Diagramas de Arquitetura](docs/architecture.html)** - Visualização interativa da arquitetura
   - **Como visualizar:** Abra o arquivo `docs/architecture.html` em qualquer navegador
   - Também disponível em Markdown: [docs/architecture.mmd](docs/architecture.mmd)
+- **[Observabilidade](LOGGING.md)** - Documentação completa de logging e Request ID
 - **[Swagger UI](http://localhost:8080/swagger/index.html)** - Documentação interativa da API (quando o servidor está rodando)
 
 ---

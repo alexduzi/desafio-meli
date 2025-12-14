@@ -173,6 +173,9 @@ make test-coverage-html
 # Limpar arquivos gerados
 make clean
 
+# executa golangci-lint run ./...
+make lint
+
 # Executar tudo (setup, swagger, build, test)
 make all
 ```

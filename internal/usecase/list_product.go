@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"project/internal/dto"
 	"project/internal/repository"
+
+	"github.com/rs/zerolog/log"
 )
 
 type ListProductUseCase struct {
@@ -18,10 +20,19 @@ func NewListProductUseCase(productRepo repository.ProductRepositoryInterface) *L
 }
 
 func (p *ListProductUseCase) Execute(ctx context.Context) ([]dto.ProductDTO, error) {
+	log.Debug().Msg("Executing ListProducts use case")
+
 	products, err := p.ProductRepository.ListProducts(ctx)
 	if err != nil {
+		log.Error().
+			Err(err).
+			Msg("Failed to list products from repository")
 		return nil, fmt.Errorf("failed to list products: %w", err)
 	}
+
+	log.Info().
+		Int("products_count", len(products)).
+		Msg("Products listed successfully")
 
 	result := make([]dto.ProductDTO, 0, len(products))
 

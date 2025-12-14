@@ -2,6 +2,7 @@ package http
 
 import (
 	"project/internal/handler"
+	"project/internal/infra/http/middleware"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -12,11 +13,18 @@ func SetupRouter(
 	productHandler *handler.ProductHandler,
 	healthHandler *handler.HealthHandler,
 ) *gin.Engine {
-	r := gin.Default()
+	r := gin.New()
+
+	r.Use(gin.Recovery())
+
+	r.Use(middleware.RequestIDMiddleware())
+
+	r.Use(middleware.LoggingMiddleware())
 
 	r.Use(ErrorHandlerMiddleware())
 
 	r.GET("/health", healthHandler.HealthCheck)
+
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	api := r.Group("/api/v1")

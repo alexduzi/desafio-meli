@@ -1,4 +1,4 @@
-.PHONY: help setup run build swagger test test-unit test-integration test-coverage test-coverage-html clean deps docker-build docker-run docker-stop docker-logs docker-compose-up docker-compose-down docker-compose-logs docker-clean
+.PHONY: help setup run build swagger test test-unit test-integration test-coverage test-coverage-html lint clean deps docker-build docker-run docker-stop docker-logs docker-compose-up docker-compose-down docker-compose-logs docker-clean
 
 # Default target
 help:
@@ -12,12 +12,13 @@ help:
 	@echo "  make build               - Build the application binary"
 	@echo "  make swagger             - Generate/regenerate Swagger documentation"
 	@echo ""
-	@echo "Testing:"
+	@echo "Testing & Quality:"
 	@echo "  make test                - Run all tests (unit + integration)"
 	@echo "  make test-unit           - Run only unit tests (fast, no DB required)"
 	@echo "  make test-integration    - Run only integration tests (requires DB)"
 	@echo "  make test-coverage       - Run tests with coverage report"
 	@echo "  make test-coverage-html  - Generate HTML coverage report"
+	@echo "  make lint                - Run golangci-lint analysis"
 	@echo ""
 	@echo "Docker:"
 	@echo "  make docker-build        - Build Docker image"
@@ -32,7 +33,7 @@ help:
 	@echo "Utilities:"
 	@echo "  make clean               - Clean build artifacts and test cache"
 	@echo "  make deps                - Download and tidy dependencies"
-	@echo "  make all                 - Run setup, deps, swagger, build, and test"
+	@echo "  make all                 - Run setup, deps, swagger, build, test, and lint"
 
 # Initial project setup
 setup:
@@ -101,6 +102,12 @@ test-coverage-html:
 	@echo "Opening in browser..."
 	@which xdg-open > /dev/null && xdg-open coverage.html || open coverage.html || echo "Please open coverage.html manually"
 
+# Run linter
+lint:
+	@echo "Running linter..."
+	@which golangci-lint > /dev/null || (echo "Installing golangci-lint..." && go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest)
+	golangci-lint run ./...
+
 # Clean build artifacts and test cache
 clean:
 	@echo "Cleaning..."
@@ -116,8 +123,8 @@ deps:
 	go mod tidy
 	@echo "Dependencies updated"
 
-# Run everything: setup, deps, swagger, build, and test
-all: setup swagger build test
+# Run everything: setup, deps, swagger, build, test, and lint
+all: setup swagger build test lint
 	@echo "All tasks completed successfully!"
 
 # Docker commands

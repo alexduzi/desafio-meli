@@ -691,7 +691,6 @@ func (h *Handler) GetProduct(c *gin.Context) {
 ├── Makefile                             # Automação de tarefas (run, test, docker, etc)
 ├── go.mod                               # Dependências do projeto
 ├── go.sum                               # Checksums das dependências
-├── LOGGING.md                           # Documentação de observabilidade
 └── README.md                            # Este arquivo
 ```
 
@@ -761,7 +760,6 @@ func (h *Handler) GetProduct(c *gin.Context) {
 - **[Diagramas de Arquitetura](docs/architecture.html)** - Visualização interativa da arquitetura
   - **Como visualizar:** Abra o arquivo `docs/architecture.html` em qualquer navegador
   - Também disponível em Markdown: [docs/architecture.mmd](docs/architecture.mmd)
-- **[Observabilidade](LOGGING.md)** - Documentação completa de logging e Request ID
 - **[Swagger UI](http://localhost:8080/swagger/index.html)** - Documentação interativa da API (quando o servidor está rodando)
 
 ---

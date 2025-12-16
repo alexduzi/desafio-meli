@@ -85,3 +85,44 @@ func GetErrorCode(err error) string {
 		return "INTERNAL_ERROR"
 	}
 }
+
+// GetUserFriendlyMessage returns a sanitized error message safe to expose to end users.
+// For server errors (5xx), it returns a generic message to avoid leaking internal details.
+// For client errors (4xx), it returns the custom message if available, or the error message.
+func GetUserFriendlyMessage(err error, statusCode int) string {
+	// For server errors (5xx), never expose internal details
+	if statusCode >= 500 {
+		var appErr *AppError
+		if errors.As(err, &appErr) && appErr.Message != "" {
+			return appErr.Message
+		}
+		return "An internal error occurred. Please try again later."
+	}
+
+	// For client errors (4xx), we can be more specific
+	var appErr *AppError
+	if errors.As(err, &appErr) {
+		if appErr.Message != "" {
+			return appErr.Message
+		}
+		// If AppError has no custom message, use the wrapped error
+		if appErr.Err != nil {
+			return appErr.Err.Error()
+		}
+	}
+
+	// For known application errors, return their message
+	switch {
+	case errors.Is(err, ErrProductNotFound):
+		return "The requested product was not found"
+	case errors.Is(err, ErrInvalidProductID):
+		return "The provided product ID is invalid"
+	case errors.Is(err, ErrInvalidInput):
+		return "The request contains invalid input"
+	case errors.Is(err, ErrDatabaseError):
+		return "An error occurred while accessing the database"
+	default:
+		// For unknown client errors, return a generic message
+		return err.Error()
+	}
+}

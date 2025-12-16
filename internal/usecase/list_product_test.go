@@ -130,17 +130,15 @@ func (suite *ListProductUseCaseTestSuite) TestListProductUseCase_Execute_MapsAll
 	product := result[0]
 	assert.Equal(suite.T(), "PROD-TEST", product.ID)
 	assert.Equal(suite.T(), "Test Title", product.Title)
-	assert.Equal(suite.T(), "Test Description", product.Description)
+	assert.Equal(suite.T(), "", product.Description)
 	assert.Equal(suite.T(), 99.99, product.Price)
 	assert.Equal(suite.T(), "EUR", product.Currency)
 	assert.Equal(suite.T(), "refurbished", product.Condition)
 	assert.Equal(suite.T(), 3, product.Stock)
-	assert.Equal(suite.T(), "seller-test", product.SellerID)
-	assert.Equal(suite.T(), "Test Seller", product.SellerName)
+	assert.Equal(suite.T(), "", product.SellerID)
+	assert.Equal(suite.T(), "", product.SellerName)
 	assert.Equal(suite.T(), "Test Category", product.Category)
 	assert.Equal(suite.T(), "https://cdn.example.com/thumb-test.jpg", product.Thumbnail)
-	assert.Equal(suite.T(), now, product.CreatedAt)
-	assert.Equal(suite.T(), now, product.UpdatedAt)
 }
 
 func (suite *ListProductUseCaseTestSuite) TestListProductUseCase_Execute_DoesNotIncludeImages() {

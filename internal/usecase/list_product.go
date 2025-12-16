@@ -10,19 +10,19 @@ import (
 )
 
 type ListProductUseCase struct {
-	ProductRepository repository.ProductRepositoryInterface
+	productRepository repository.ProductRepositoryInterface
 }
 
 func NewListProductUseCase(productRepo repository.ProductRepositoryInterface) *ListProductUseCase {
 	return &ListProductUseCase{
-		ProductRepository: productRepo,
+		productRepository: productRepo,
 	}
 }
 
 func (p *ListProductUseCase) Execute(ctx context.Context) ([]dto.ProductDTO, error) {
 	log.Debug().Msg("Executing ListProducts use case")
 
-	products, err := p.ProductRepository.ListProducts(ctx)
+	products, err := p.productRepository.ListProducts(ctx)
 	if err != nil {
 		log.Error().
 			Err(err).
@@ -34,25 +34,5 @@ func (p *ListProductUseCase) Execute(ctx context.Context) ([]dto.ProductDTO, err
 		Int("products_count", len(products)).
 		Msg("Products listed successfully")
 
-	result := make([]dto.ProductDTO, 0, len(products))
-
-	for _, product := range products {
-		result = append(result, dto.ProductDTO{
-			ID:          product.ID,
-			Title:       product.Title,
-			Description: product.Description,
-			Price:       product.Price,
-			Currency:    product.Currency,
-			Condition:   product.Condition,
-			Stock:       product.Stock,
-			SellerID:    product.SellerID,
-			SellerName:  product.SellerName,
-			Category:    product.Category,
-			Thumbnail:   product.Thumbnail,
-			CreatedAt:   product.CreatedAt,
-			UpdatedAt:   product.UpdatedAt,
-		})
-	}
-
-	return result, nil
+	return toListProductDTO(products), nil
 }
